@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
 
 function Login() {
@@ -17,24 +17,25 @@ function Login() {
     try {
       const res = await api.post("/auth/login", form);
 
-      // ✅ Save token
       localStorage.setItem("token", res.data.token);
-
-      // ✅ Save user info
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      setMessage("Login successful!");
-
-      // ✅ Role-based redirect
+      // Redirect based on role
       if (res.data.user.isAdmin) {
         navigate("/admin/dashboard");
       } else {
-        navigate("/");
+        if (res.data.user.isAdmin) {
+  navigate("/admin/dashboard");
+} else {
+  navigate("/");
+}
+
+window.location.reload(); // 🔥 Add this line
+
       }
 
     } catch (error) {
-      console.error(error);
-      setMessage("Invalid credentials.");
+      setMessage("Invalid email or password.");
     }
   };
 
@@ -66,7 +67,15 @@ function Login() {
         </button>
       </form>
 
-      {message && <p>{message}</p>}
+      {message && <p style={{ color: "red" }}>{message}</p>}
+
+      {/* Register Link Section */}
+      <p style={{ marginTop: "20px", textAlign: "center" }}>
+        Don’t have an account?{" "}
+        <Link to="/register" style={{ color: "#2c7be5" }}>
+          Register here
+        </Link>
+      </p>
     </div>
   );
 }
