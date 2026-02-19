@@ -1,0 +1,95 @@
+[
+  {
+    "name": "Water Wells for All",
+    "mission": "Deliver clean water access to remote villages through solar-powered wells.",
+    "focusAreas": ["Water Access", "Health"],
+    "coverImage": "https://images.unsplash.com/photo-1529122313592-1383edd3fe24?auto=format&fit=crop&w=1200&q=80",
+    "donationNeeds": {
+      "summary": "Fund the next three solar wells in Northern Kenya.",
+      "items": [
+        {
+          "label": "Solar pump and filtration kit",
+          "description": "Complete kit including solar pump, storage tank, and filtration.",
+          "amountNeeded": 8500
+        }
+      ]
+    },
+    "goals": [
+      {
+        "title": "Well Project 2024",
+        "description": "Deploy three solar wells in Baringo and Turkana counties.",
+        "targetAmount": 25500,
+        "amountRaised": 14200
+      }
+    ],
+    "transparencyUpdates": [
+      {
+        "title": "Two wells completed",
+        "description": "Clean water flowing for 1,200 people across two villages.",
+        "publishedAt": "2024-05-02T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "name": "STEM Sisters Initiative",
+    "mission": "Equip girls with coding tools, mentorship, and scholarship pathways.",
+    "focusAreas": ["Education", "Youth"],
+    "coverImage": "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1200&q=80",
+    "donationNeeds": {
+      "summary": "Launch the 2024 mentorship cohort with devices and travel support.",
+      "items": [
+        {
+          "label": "Laptop grants for students",
+          "description": "Provide laptops and connectivity kits for 40 girls.",
+          "amountNeeded": 12000
+        }
+      ]
+    },
+    "goals": [
+      {
+        "title": "Cohort 6 scholarships",
+        "description": "Provide hardware and internet access to 40 future technologists.",
+        "targetAmount": 18000,
+        "amountRaised": 6200
+      }
+    ],
+    "transparencyUpdates": [
+      {
+        "title": "Mentorship kickoff",
+        "description": "20 mentors matched with students across five countries.",
+        "publishedAt": "2024-04-20T00:00:00.000Z"
+      }
+    ]
+  },
+  {
+    "name": "Harvest Together",
+    "mission": "Regenerate soil health with climate-smart farming cooperatives.",
+    "focusAreas": ["Climate", "Food Security"],
+    "coverImage": "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80",
+    "donationNeeds": {
+      "summary": "Scale regenerative pilot to 50 additional acres across two cooperatives.",
+      "items": [
+        {
+          "label": "Compost and drip irrigation kits",
+          "description": "Supply composting equipment and efficient irrigation hardware.",
+          "amountNeeded": 9500
+        }
+      ]
+    },
+    "goals": [
+      {
+        "title": "Harvest 2024 cohort",
+        "description": "Train 120 farmers on regenerative agriculture practices.",
+        "targetAmount": 14000,
+        "amountRaised": 9100
+      }
+    ],
+    "transparencyUpdates": [
+      {
+        "title": "Soil health results",
+        "description": "Average soil organic matter increased by 2.4 points after 8 months.",
+        "publishedAt": "2024-03-15T00:00:00.000Z"
+      }
+    ]
+  }
+]
