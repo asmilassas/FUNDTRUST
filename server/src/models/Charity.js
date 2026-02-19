@@ -15,10 +15,12 @@ const transparencyUpdateSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
+    images: [{ type: String }],   //  Multiple images
     publishedAt: { type: Date, default: Date.now },
   },
   { _id: false }
 );
+
 
 const charitySchema = new mongoose.Schema(
   {

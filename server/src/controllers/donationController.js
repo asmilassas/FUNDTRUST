@@ -48,6 +48,12 @@ const createDonationRecord = async ({ user, charity, payload }) => {
 
 const createOneTimeDonation = async (req, res) => {
   try {
+    if (req.user.isAdmin) {
+        return res.status(403).json({
+       message: "Admins are not allowed to make donations",
+        });
+    }
+
     const {
       charityId,
       amount,
@@ -112,19 +118,18 @@ const createOneTimeDonation = async (req, res) => {
     donation.paymentMethod = "stripe";
 
     if (!stripeReady) {
-  donation.status = 'succeeded';
+  donation.status = "succeeded";
   await donation.save();
 
-  const charity = await Charity.findById(donation.charity);
-
-  if (charity && charity.goals.length > 0) {
+  const charity = await Charity.findById(charity._id);
+  if (charity && charity.goals && charity.goals.length > 0) {
     charity.goals[0].amountRaised += donation.amount;
     await charity.save();
   }
 
   return res.status(201).json({
+    message: "Donation successful (Simulated)",
     donation,
-    stripe: { configured: false },
   });
 }
 
@@ -329,29 +334,34 @@ const approveDonation = async (req, res) => {
       return res.status(404).json({ message: "Donation not found" });
     }
 
-    if (donation.status === "succeeded") {
-      return res.status(400).json({ message: "Donation already approved" });
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
     }
 
-    // Mark donation as succeeded
+    // Already approved?
+    if (donation.status === "succeeded") {
+      return res.json({ message: "Donation already approved" });
+    }
+
     donation.status = "succeeded";
     await donation.save();
 
-    //  Update charity goal progress
+    // 🔥 UPDATE CHARITY GOAL
     const charity = await Charity.findById(donation.charity);
 
-    if (charity && charity.goals.length > 0) {
+    if (charity && charity.goals && charity.goals.length > 0) {
       charity.goals[0].amountRaised += donation.amount;
       await charity.save();
     }
 
-    res.json({ message: "Donation approved", donation });
+    res.json({ message: "Donation approved and project updated" });
 
   } catch (error) {
-    console.error("Approve donation error:", error);
-    res.status(500).json({ message: "Error approving donation" });
+    console.error(error);
+    res.status(500).json({ message: "Approval failed" });
   }
 };
+
 
 
 const getPendingDonations = async (req, res) => {
