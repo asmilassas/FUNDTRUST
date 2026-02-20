@@ -15,21 +15,22 @@ function ProjectPage() {
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
-    api.get(`/charities/${id}`)
-      .then((res) => {
-        setProject(res.data.charity);
-      })
-      .catch((err) => {
-        console.error("Error fetching project:", err);
-      });
+    fetchProject();
   }, [id]);
+
+  const fetchProject = async () => {
+    try {
+      const res = await api.get(`/charities/${id}`);
+      setProject(res.data.charity);
+    } catch (err) {
+      console.error("Error fetching project:", err);
+    }
+  };
 
   if (!project) return <p style={{ padding: "40px" }}>Loading...</p>;
 
-
-  //  Funding Progress
-
-  const goal = project?.goals?.[0];
+  // 📊 Funding Progress
+  const goal = project.goals?.[0];
 
   const progress = goal
     ? Math.min((goal.amountRaised / goal.targetAmount) * 100, 100)
@@ -39,9 +40,7 @@ function ProjectPage() {
     ? goal.amountRaised >= goal.targetAmount
     : false;
 
-
-  //  Handle Donation
-  
+  // 💰 Donation Handler
   const handleDonate = async (e) => {
     e.preventDefault();
 
@@ -82,66 +81,52 @@ function ProjectPage() {
       const response = await api.post(
         "/donations/one-time",
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
 
       setMessage(response.data.message || "Donation submitted!");
-
-      // Reload project to update progress
-      const updated = await api.get(`/charities/${id}`);
-      setProject(updated.data.charity);
-
+      fetchProject();
       setAmount("");
       setSelectedFile(null);
 
     } catch (error) {
       console.error(error);
-      setMessage(
-        error.response?.data?.message || "Donation failed."
-      );
+      setMessage(error.response?.data?.message || "Donation failed.");
     }
   };
 
-  return (
-    <div style={{ padding: "50px", maxWidth: "800px", margin: "auto" }}>
-      
-      <h1>{project.name}</h1>
+  // 🎨 Status Badge Style
+  const getStatusColor = (status) => {
+    if (status === "completed") return "green";
+    if (status === "in-progress") return "orange";
+    return "#2c7be5";
+  };
 
+  return (
+    <div style={{ padding: "50px", maxWidth: "900px", margin: "auto" }}>
+
+      <h1>{project.name}</h1>
       <p style={{ fontSize: "18px", marginTop: "15px" }}>
         {project.mission}
       </p>
 
-      {/* 
-           Progress Section
-     */}
+      {/* 📊 Progress */}
       {goal && (
-        <div style={{ marginTop: "25px" }}>
+        <div style={{ marginTop: "30px" }}>
           <h3>Funding Progress</h3>
+          <p>${goal.amountRaised} raised of ${goal.targetAmount}</p>
 
-          <p>
-            ${goal.amountRaised} raised of ${goal.targetAmount}
-          </p>
-
-          <div
-            style={{
-              background: "#eee",
-              borderRadius: "8px",
-              height: "20px",
-              width: "100%",
-              overflow: "hidden"
-            }}
-          >
-            <div
-              style={{
-                width: `${progress}%`,
-                background: "#2c7be5",
-                height: "100%"
-              }}
-            ></div>
+          <div style={{
+            background: "#eee",
+            borderRadius: "8px",
+            height: "20px",
+            overflow: "hidden"
+          }}>
+            <div style={{
+              width: `${progress}%`,
+              background: "#2c7be5",
+              height: "100%"
+            }} />
           </div>
 
           <p>{progress.toFixed(1)}% completed</p>
@@ -154,12 +139,9 @@ function ProjectPage() {
         </div>
       )}
 
-      <hr style={{ margin: "30px 0" }} />
+      <hr style={{ margin: "40px 0" }} />
 
-      {/* 
-          Donation Section
-     */}
-
+      {/* 💰 Donation Section */}
       {!user ? (
         <div>
           <p>You must login to donate.</p>
@@ -185,31 +167,19 @@ function ProjectPage() {
         <>
           <h3>Make a Donation</h3>
 
-          <form onSubmit={handleDonate} style={{ marginTop: "20px" }}>
-            
+          <form onSubmit={handleDonate}>
             <input
               type="number"
               placeholder="Enter amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              style={{
-                padding: "10px",
-                width: "100%",
-                marginBottom: "15px",
-                borderRadius: "6px",
-                border: "1px solid #ccc"
-              }}
+              style={{ width: "100%", padding: "10px", marginBottom: "15px" }}
             />
 
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              style={{
-                padding: "10px",
-                width: "100%",
-                marginBottom: "15px",
-                borderRadius: "6px"
-              }}
+              style={{ width: "100%", padding: "10px", marginBottom: "15px" }}
             >
               <option value="stripe">Stripe (Online Payment)</option>
               <option value="bank">Bank Transfer</option>
@@ -232,8 +202,7 @@ function ProjectPage() {
                 color: "white",
                 border: "none",
                 borderRadius: "8px",
-                cursor: isFullyFunded ? "not-allowed" : "pointer",
-                fontSize: "16px"
+                cursor: isFullyFunded ? "not-allowed" : "pointer"
               }}
             >
               {isFullyFunded ? "Fully Funded" : "Donate"}
@@ -242,11 +211,58 @@ function ProjectPage() {
         </>
       )}
 
+      {/* 🔥 Project Updates */}
+      {project.transparencyUpdates?.length > 0 && (
+        <div style={{ marginTop: "60px" }}>
+          <h3>Project Updates</h3>
+
+          {project.transparencyUpdates.map((update, index) => (
+            <div key={index}
+              style={{
+                border: "1px solid #ddd",
+                padding: "20px",
+                borderRadius: "8px",
+                marginBottom: "25px"
+              }}
+            >
+              <h4>{update.title}</h4>
+
+              <span style={{
+                background: getStatusColor(update.status),
+                color: "white",
+                padding: "4px 10px",
+                borderRadius: "20px",
+                fontSize: "12px"
+              }}>
+                {update.status}
+              </span>
+
+              <p style={{ marginTop: "10px" }}>{update.description}</p>
+
+              {update.images?.map((img, i) => (
+                <img
+                  key={i}
+                  src={`http://localhost:5000/uploads/${img}`}
+                  alt="update"
+                  style={{
+                    width: "200px",
+                    marginRight: "10px",
+                    marginTop: "10px",
+                    borderRadius: "6px"
+                  }}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
       {message && (
         <p style={{ marginTop: "20px", color: "green" }}>
           {message}
         </p>
       )}
+
     </div>
   );
 }

@@ -70,6 +70,24 @@ const createOneTimeDonation = async (req, res) => {
     }
 
     const charity = await ensureCharityExists(charityId);
+    // 🚫 Prevent Overfunding
+const goal = charity.goals?.[0];
+
+if (goal) {
+  const remainingAmount = goal.targetAmount - goal.amountRaised;
+
+  if (remainingAmount <= 0) {
+    return res.status(400).json({
+      message: "This project is already fully funded.",
+    });
+  }
+
+  if (Number(amount) > remainingAmount) {
+    return res.status(400).json({
+      message: `Only $${remainingAmount} remaining to complete this project.`,
+    });
+  }
+}
 
     // =========================
     // 🏦 BANK TRANSFER LOGIC

@@ -15,11 +15,16 @@ const transparencyUpdateSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
-    images: [{ type: String }],   //  Multiple images
+    images: [{ type: String }],   // multiple images
+    status: {
+      type: String,
+      enum: ["started", "in-progress", "completed"],
+      default: "started"
+    },
     publishedAt: { type: Date, default: Date.now },
-  },
-  { _id: false }
+  }
 );
+
 
 
 const charitySchema = new mongoose.Schema(
