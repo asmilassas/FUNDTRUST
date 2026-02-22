@@ -10,48 +10,37 @@ const {
   addProjectUpdate,
 } = require("../controllers/charityController");
 
-const protect = require("../middlewares/authMiddleware");
-const adminOnly = require("../middlewares/adminMiddleware");
+const { protect, admin } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
-
 
 // =============================
 // Public Routes
 // =============================
 
-// Get all charities
 router.get("/", getCharities);
-
-// Get single charity
 router.get("/:id", getCharity);
 
-
 // =============================
-// Admin Only Routes
+// Admin Routes
 // =============================
 
-// Create charity
-router.post("/", protect, adminOnly, createCharity);
+router.post("/", protect, admin, createCharity);
+router.patch("/:id", protect, admin, updateCharity);
+router.delete("/:id", protect, admin, deleteCharity);
 
-// Update charity basic info
-router.patch("/:id", protect, adminOnly, updateCharity);
-
-// Delete charity
-router.delete("/:id", protect, adminOnly, deleteCharity);
-
-// Add transparency/project update
 router.post(
   "/:id/update",
   protect,
-  adminOnly,
+  admin,
   upload.array("images", 5),
   addProjectUpdate
 );
-// Admin - Get all projects
-router.get("/admin/all", protect, adminOnly, async (req, res) => {
+
+router.get("/admin/all", protect, admin, async (req, res) => {
   try {
-    const charities = await require("../models/Charity")
-      .find()
+    const Charity = require("../models/Charity");
+
+    const charities = await Charity.find()
       .populate("category", "name")
       .sort({ createdAt: -1 });
 
@@ -61,6 +50,5 @@ router.get("/admin/all", protect, adminOnly, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch projects" });
   }
 });
-
 
 module.exports = router;

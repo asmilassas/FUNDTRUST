@@ -22,10 +22,14 @@ const donationSchema = new mongoose.Schema(
   },
 
   status: {
-    type: String,
-    enum: ['pending', 'succeeded', 'requires_action', 'failed', 'refunded'],
-    default: 'pending',
-  },
+  type: String,
+  enum: ["pending", "succeeded", "failed", "rejected"],
+  default: "pending",
+},
+
+  rejectionReason: {
+  type: String,
+},
 
   stripePaymentIntentId: { type: String },
   stripeSubscriptionId: { type: String },

@@ -10,7 +10,9 @@ import MyDonations from "./pages/MyDonations";
 import AdminUpdatePage from "./pages/AdminUpdatePage";
 import AdminProjectsPage from "./pages/AdminProjectsPage";
 import AdminProjectUpdatePage from "./pages/AdminProjectUpdatePage";
-
+import NotificationsPage from "./pages/NotificationsPage";
+import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminCategoriesPage from "./pages/AdminCategoriesPage";
 
 function App() {
   return (
@@ -28,6 +30,9 @@ function App() {
         <Route path="/admin/project/:id/update" element={<AdminUpdatePage />} />
         <Route path="/admin/projects" element={<AdminProjectsPage />} />
         <Route path="/admin/projects/:id" element={<AdminProjectUpdatePage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/categories" element={<AdminCategoriesPage />} />
       </Routes>
     </>
   );

@@ -4,41 +4,62 @@ import api from "../services/api";
 
 function CategoryPage() {
   const { id } = useParams();
-  const navigate = useNavigate(); // ✅ Add this
-  const [charities, setCharities] = useState([]);
+  const navigate = useNavigate();
+
+  const [projects, setProjects] = useState([]);
+  const [categoryName, setCategoryName] = useState("");
 
   useEffect(() => {
-    api.get(`/charities?category=${id}`)
-      .then((res) => {
-        setCharities(res.data.charities);
-      })
-      .catch((err) => {
-        console.error("Error fetching charities:", err);
-      });
+    fetchProjects();
   }, [id]);
 
-  return (
-    <div style={{ padding: "40px" }}>
-      <h2>Projects in This Category</h2>
+  const fetchProjects = async () => {
+    try {
+      const res = await api.get(`/charities?category=${id}`);
+      const data = res.data.charities || [];
 
-      {charities.length === 0 ? (
-        <p>No projects found</p>
+      setProjects(data);
+
+      if (data.length > 0) {
+        setCategoryName(data[0].category?.name || "Projects");
+      } else {
+        setCategoryName("Projects");
+      }
+
+    } catch (error) {
+      console.error("Error loading projects:", error);
+    }
+  };
+
+  return (
+    <div style={{ padding: "40px", maxWidth: "1000px", margin: "auto" }}>
+      <h1>{categoryName}</h1>
+
+      {projects.length === 0 ? (
+        <p>No projects found in this section.</p>
       ) : (
-        charities.map((charity) => (
+        projects.map((project) => (
           <div
-            key={charity._id}
-            onClick={() => navigate(`/project/${charity._id}`)} // ✅ Click action
+            key={project._id}
+            onClick={() => navigate(`/project/${project._id}`)}
             style={{
-              border: "1px solid #ccc",
-              padding: "15px",
-              marginBottom: "10px",
-              borderRadius: "6px",
-              cursor: "pointer", // ✅ Makes it look clickable
-              boxShadow: "0 3px 8px rgba(0,0,0,0.05)"
+              border: "1px solid #ddd",
+              padding: "20px",
+              marginBottom: "20px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              transition: "0.2s",
             }}
+            onMouseOver={(e) =>
+              (e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(0,0,0,0.1)")
+            }
+            onMouseOut={(e) =>
+              (e.currentTarget.style.boxShadow = "none")
+            }
           >
-            <h3>{charity.name}</h3>
-            <p>{charity.mission}</p>
+            <h3>{project.name}</h3>
+            <p>{project.mission}</p>
           </div>
         ))
       )}

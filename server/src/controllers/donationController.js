@@ -70,7 +70,7 @@ const createOneTimeDonation = async (req, res) => {
     }
 
     const charity = await ensureCharityExists(charityId);
-    // 🚫 Prevent Overfunding
+    //  Prevent Overfunding
 const goal = charity.goals?.[0];
 
 if (goal) {
@@ -89,9 +89,8 @@ if (goal) {
   }
 }
 
-    // =========================
-    // 🏦 BANK TRANSFER LOGIC
-    // =========================
+    //  BANK TRANSFER LOGIC
+    
     if (paymentMethod === "bank") {
       if (!req.file) {
         return res.status(400).json({
@@ -118,7 +117,7 @@ if (goal) {
     }
 
     // =========================
-    // 💳 STRIPE (SIMULATION MODE)
+    //  STRIPE (SIMULATION MODE)
     // =========================
 
     const donation = await createDonationRecord({
@@ -356,23 +355,70 @@ const approveDonation = async (req, res) => {
       return res.status(403).json({ message: "Admin access required" });
     }
 
-    // Already approved?
     if (donation.status === "succeeded") {
       return res.json({ message: "Donation already approved" });
     }
 
+    const charity = await Charity.findById(donation.charity);
+
+    if (!charity || !charity.goals || charity.goals.length === 0) {
+      return res.status(400).json({ message: "Project goal not found" });
+    }
+
+    const goal = charity.goals[0];
+    const remainingAmount = goal.targetAmount - goal.amountRaised;
+
+    //  Already completed
+    if (remainingAmount <= 0) {
+      return res.status(400).json({
+        message: "Project already fully funded",
+      });
+    }
+
+    //  Prevent overfunding
+    if (donation.amount > remainingAmount) {
+      return res.status(400).json({
+        message: `Only $${remainingAmount} remaining. Donation exceeds limit.`,
+      });
+    }
+
+    //  Approve donation
     donation.status = "succeeded";
     await donation.save();
 
-    // 🔥 UPDATE CHARITY GOAL
-    const charity = await Charity.findById(donation.charity);
+    // Save previous amount for comparison
+    const previousAmount = goal.amountRaised;
 
-    if (charity && charity.goals && charity.goals.length > 0) {
-      charity.goals[0].amountRaised += donation.amount;
-      await charity.save();
+    // Update goal
+    goal.amountRaised += donation.amount;
+    await charity.save();
+
+    //  If project JUST reached full funding → notify donors
+    if (
+      previousAmount < goal.targetAmount &&
+      goal.amountRaised >= goal.targetAmount
+    ) {
+      const donors = await Donation.find({
+        charity: charity._id,
+        status: "succeeded",
+      }).populate("user");
+
+      const User = require("../models/User");
+
+      for (const d of donors) {
+        await User.findByIdAndUpdate(d.user._id, {
+          $push: {
+            notifications: {
+              message: `🎉 The project "${charity.name}" has been fully funded! Thank you for your support.`,
+            },
+          },
+        });
+      }
     }
 
-    res.json({ message: "Donation approved and project updated" });
+    res.json({
+      message: "Donation approved and project updated successfully",
+    });
 
   } catch (error) {
     console.error(error);
@@ -383,14 +429,60 @@ const approveDonation = async (req, res) => {
 
 
 const getPendingDonations = async (req, res) => {
-  const donations = await Donation.find({
-    paymentMethod: "bank",
-    status: "pending",
-  })
-    .populate("user", "name email")
-    .populate("charity", "name");
+  try {
+    const donations = await Donation.find({
+      paymentMethod: "bank",
+      status: "pending",   // 🔥 MUST be pending only
+    })
+      .populate("user", "name email")
+      .populate("charity", "name");
 
-  res.json({ donations });
+    res.json({ donations });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch pending donations" });
+  }
+};
+
+const rejectDonation = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const donation = await Donation.findById(req.params.id);
+
+    if (!donation) {
+      return res.status(404).json({ message: "Donation not found" });
+    }
+
+    if (donation.status !== "pending") {
+      return res.status(400).json({
+        message: "Only pending donations can be rejected",
+      });
+    }
+
+    donation.status = "rejected";
+    donation.rejectionReason = reason || "Rejected by admin";
+
+    await donation.save();
+
+    // 🔔 Add notification to user
+    const User = require("../models/User");
+
+    await User.findByIdAndUpdate(donation.user, {
+      $push: {
+        notifications: {
+          message: `❌ Your donation was rejected. Reason: ${donation.rejectionReason}`,
+          createdAt: new Date(),
+        },
+      },
+    });
+
+    res.json({ message: "Donation rejected successfully" });
+
+  } catch (error) {
+    console.error("Reject error:", error);
+    res.status(500).json({ message: "Rejection failed" });
+  }
 };
 
 
@@ -403,5 +495,6 @@ module.exports = {
   listTransparencySummary,
   acknowledgeDonation,
   approveDonation,
-  getPendingDonations
+  getPendingDonations,
+  rejectDonation
 };

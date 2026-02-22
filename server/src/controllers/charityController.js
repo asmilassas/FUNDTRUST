@@ -1,12 +1,19 @@
 const Charity = require("../models/Charity");
 
-
-// =============================
-// Get All Charities
-// =============================
+// Get All
 const getCharities = async (req, res) => {
   try {
-    const charities = await Charity.find();
+    const { category } = req.query;
+
+    let filter = {};
+
+    if (category) {
+      filter.category = category;
+    }
+
+    const charities = await Charity.find(filter)
+      .populate("category", "name");
+
     res.json({ charities });
   } catch (error) {
     console.error(error);
@@ -14,10 +21,7 @@ const getCharities = async (req, res) => {
   }
 };
 
-
-// =============================
-// Get Single Charity
-// =============================
+// Get Single
 const getCharity = async (req, res) => {
   try {
     const charity = await Charity.findById(req.params.id);
@@ -28,31 +32,26 @@ const getCharity = async (req, res) => {
 
     res.json({ charity });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Failed to fetch project" });
   }
 };
 
-
-// =============================
-// Create Charity
-// =============================
+// Create
 const createCharity = async (req, res) => {
   try {
     const charity = new Charity(req.body);
     await charity.save();
 
-    res.status(201).json({ message: "Project created successfully", charity });
+    res.status(201).json({
+      message: "Project created successfully",
+      charity,
+    });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Failed to create project" });
   }
 };
 
-
-// =============================
-// Update Charity
-// =============================
+// Update
 const updateCharity = async (req, res) => {
   try {
     const charity = await Charity.findByIdAndUpdate(
@@ -67,15 +66,11 @@ const updateCharity = async (req, res) => {
 
     res.json({ message: "Project updated", charity });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Failed to update project" });
   }
 };
 
-
-// =============================
-// Delete Charity
-// =============================
+// Delete
 const deleteCharity = async (req, res) => {
   try {
     const charity = await Charity.findByIdAndDelete(req.params.id);
@@ -86,15 +81,11 @@ const deleteCharity = async (req, res) => {
 
     res.json({ message: "Project deleted successfully" });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Failed to delete project" });
   }
 };
 
-
-// =============================
-// Add Transparency Update
-// =============================
+// Add Update
 const addProjectUpdate = async (req, res) => {
   try {
     const charity = await Charity.findById(req.params.id);
@@ -116,13 +107,10 @@ const addProjectUpdate = async (req, res) => {
     await charity.save();
 
     res.json({ message: "Project update added successfully" });
-
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Failed to add update" });
   }
 };
-
 
 module.exports = {
   getCharities,

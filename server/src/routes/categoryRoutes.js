@@ -2,21 +2,26 @@ const express = require("express");
 const router = express.Router();
 
 const {
-  createCategory,
   getCategories,
+  createCategory,
   updateCategory,
   deleteCategory,
 } = require("../controllers/categoryController");
 
-const authMiddleware = require("../middlewares/authMiddleware");
-const adminMiddleware = require("../middlewares/adminMiddleware");
+const { protect, admin } = require("../middlewares/authMiddleware");
 
+// =======================
 // Public
+// =======================
+
 router.get("/", getCategories);
 
+// =======================
 // Admin Only
-router.post("/", authMiddleware, adminMiddleware, createCategory);
-router.put("/:id", authMiddleware, adminMiddleware, updateCategory);
-router.delete("/:id", authMiddleware, adminMiddleware, deleteCategory);
+// =======================
+
+router.post("/", protect, admin, createCategory);
+router.patch("/:id", protect, admin, updateCategory);
+router.delete("/:id", protect, admin, deleteCategory);
 
 module.exports = router;

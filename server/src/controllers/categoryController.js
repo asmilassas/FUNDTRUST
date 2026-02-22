@@ -19,12 +19,12 @@ exports.createCategory = async (req, res) => {
       category,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error creating category",
-      error: error.message,
-    });
-  }
+  console.error(" CREATE CATEGORY ERROR:", error);
+  res.status(500).json({
+    message: error.message,
+    fullError: error
+  });
+}
 };
 
 // Get All Categories
