@@ -23,6 +23,15 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String },
     isAdmin: { type: Boolean, default: false },
     preferences: { type: preferenceSchema, default: () => ({}) },
+
+    // notification NEW FIELD
+    notifications: [
+      {
+        message: { type: String },
+        read: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now }
+      }
+    ],
   },
   {
     timestamps: true,

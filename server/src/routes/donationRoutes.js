@@ -8,23 +8,18 @@ const {
   listTransparencySummary,
   acknowledgeDonation,
   approveDonation,
+  rejectDonation,
   getPendingDonations
 } = require("../controllers/donationController");
 
-const protect = require("../middlewares/authMiddleware");
-const adminOnly = require("../middlewares/adminMiddleware");
+const { protect, admin } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
+const adminOnly = require("../middlewares/adminMiddleware");
 
-// =======================
-// Public Routes
-// =======================
-
+// Public
 router.get("/transparency", listTransparencySummary);
 
-// =======================
-// User Protected Routes
-// =======================
-
+// User
 router.post(
   "/one-time",
   protect,
@@ -33,27 +28,11 @@ router.post(
 );
 
 router.post("/recurring", protect, createRecurringDonation);
-
 router.get("/me", protect, listUserDonations);
-
 router.get("/:id/receipt", protect, acknowledgeDonation);
 
-// =======================
-// Admin Only Routes
-// =======================
-
-router.get(
-  "/admin/pending",
-  protect,
-  adminOnly,
-  getPendingDonations
-);
-
-router.put(
-  "/:id/approve",
-  protect,
-  adminOnly,
-  approveDonation
-);
-
+// Admin
+router.get("/admin/pending", protect, admin, getPendingDonations);
+router.put("/:id/approve", protect, admin, approveDonation);
+router.put("/:id/reject", protect, adminOnly, rejectDonation);
 module.exports = router;
