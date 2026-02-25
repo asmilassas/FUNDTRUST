@@ -90,7 +90,6 @@ if (goal) {
 }
 
     //  BANK TRANSFER LOGIC
-    
     if (paymentMethod === "bank") {
       if (!req.file) {
         return res.status(400).json({
@@ -116,10 +115,7 @@ if (goal) {
       });
     }
 
-    // =========================
     //  STRIPE (SIMULATION MODE)
-    // =========================
-
     const donation = await createDonationRecord({
       user: req.user,
       charity,
@@ -426,8 +422,6 @@ const approveDonation = async (req, res) => {
   }
 };
 
-
-
 const getPendingDonations = async (req, res) => {
   try {
     const donations = await Donation.find({
@@ -484,9 +478,6 @@ const rejectDonation = async (req, res) => {
     res.status(500).json({ message: "Rejection failed" });
   }
 };
-
-
-
 
 module.exports = {
   createOneTimeDonation,
