@@ -9,7 +9,7 @@ const userRoutes = require('./routes/userRoutes');
 const charityRoutes = require('./routes/charityRoutes');
 const donationRoutes = require('./routes/donationRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
-const commentRoutes = require("./routes/commentRoutes");
+const feedbackRoutes = require('./routes/feedbackRoutes');
 
 const app = express();
 
@@ -31,7 +31,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/charities', charityRoutes);
 app.use('/api/donations', donationRoutes);
-app.use("/api/comments", commentRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // Health route
 app.get('/api/health', (req, res) => {

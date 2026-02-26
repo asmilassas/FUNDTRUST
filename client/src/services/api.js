@@ -1,30 +1,11 @@
-/*import axios from "axios";
-
-const api = axios.create({
-  baseURL: "/api",
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
-
-export default api;*/
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: "http://localhost:5000/api", // 🔥 FIXED
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-
-  console.log("Interceptor running. Token:", token); // 👈 IMPORTANT LINE
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -34,4 +15,3 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
-
