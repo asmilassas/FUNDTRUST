@@ -7,6 +7,8 @@ const {
   updatePreferences,
   getAllUsers,
   deleteUser,
+  createUserByAdmin,
+  updateUserByAdmin,
 } = require("../controllers/userController");
 
 const { protect, admin } = require("../middlewares/authMiddleware");
@@ -47,5 +49,11 @@ router.get("/admin/all", protect, admin, getAllUsers);
 
 // Delete user
 router.delete("/admin/:id", protect, admin, deleteUser);
+
+//Add user
+router.post("/admin/create", protect, admin, createUserByAdmin);
+
+//update user
+router.put("/admin/:id", protect, admin, updateUserByAdmin);
 
 module.exports = router;

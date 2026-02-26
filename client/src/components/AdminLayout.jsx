@@ -1,16 +1,9 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function AdminLayout({ children }) {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login", { replace: true });
-  };
-
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
+      
       {/* Sidebar */}
       <div
         style={{
@@ -21,6 +14,8 @@ function AdminLayout({ children }) {
           display: "flex",
           flexDirection: "column",
           gap: "20px",
+          position: "fixed",
+          height: "100vh",
         }}
       >
         <h2 style={{ marginBottom: "30px" }}>Admin Panel</h2>
@@ -36,29 +31,16 @@ function AdminLayout({ children }) {
         <Link style={linkStyle} to="/admin/users">
           👥 Manage Users
         </Link>
-        <Link style={linkStyle} to="/admin/categories">
-           📂 Manage Sections
-        </Link>
 
-        <button
-          onClick={handleLogout}
-          style={{
-            marginTop: "auto",
-            padding: "10px",
-            background: "#e63757",
-            border: "none",
-            borderRadius: "6px",
-            color: "white",
-            cursor: "pointer",
-          }}
-        >
-          Logout
-        </button>
+        <Link style={linkStyle} to="/admin/categories">
+          📂 Manage Sections
+        </Link>
       </div>
 
       {/* Main Content */}
       <div
         style={{
+          marginLeft: "250px",
           flex: 1,
           padding: "40px",
           background: "#f3f4f6",
@@ -71,6 +53,7 @@ function AdminLayout({ children }) {
 }
 
 const linkStyle = {
+  display: "block",
   color: "white",
   textDecoration: "none",
   padding: "10px",
