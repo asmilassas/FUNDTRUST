@@ -1,152 +1,90 @@
 const Feedback = require("../models/Feedback");
-const Charity = require("../models/Charity");
 
-//Create Feedback
+// Create feedback (Logged user only)
 const createFeedback = async (req, res) => {
   try {
-    const { charityId, rating, comment } = req.body;
+    const { rating, comment } = req.body;
 
-    // Validation
-    if (!charityId || !rating || !comment) {
-      return res.status(400).json({
-        message: "charityId, rating and comment are required",
-      });
+    if (!rating || !comment) {
+      return res.status(400).json({ message: "All fields required" });
     }
 
-    // Check if charity exists
-    const charity = await Charity.findById(charityId);
-
-    if (!charity) {
-      return res.status(404).json({
-        message: "Charity not found",
-      });
-    }
-
-    const feedback = new Feedback({
+    const feedback = await Feedback.create({
       user: req.user._id,
-      charity: charityId,
       rating,
       comment,
     });
 
-    await feedback.save();
+    res.status(201).json({ feedback });
 
-    res.status(201).json({
-      message: "Feedback created successfully",
-      feedback,
-    });
   } catch (error) {
-    console.error("Create feedback error:", error);
-    res.status(500).json({
-      message: "Failed to create feedback",
-    });
+    res.status(500).json({ message: "Failed to create feedback" });
   }
 };
 
-//Get Logged User Feedback
-const getMyFeedback = async (req, res) => {
-  try {
-    const feedback = await Feedback.find({
-      user: req.user._id,
-    }).populate("charity", "name");
-
-    res.json({ feedback });
-  } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch feedback",
-    });
-  }
-};
-
-//Admin — Get All Feedback
+// Get all feedback (Public)
 const getAllFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.find()
-      .populate("user", "name email")
-      .populate("charity", "name")
+      .populate("user", "_id name email")
       .sort({ createdAt: -1 });
 
     res.json({ feedback });
+
   } catch (error) {
-    res.status(500).json({
-      message: "Failed to fetch feedback",
-    });
+    res.status(500).json({ message: "Failed to fetch feedback" });
   }
 };
 
-//Update Feedback (Owner Only)
+// Update feedback (Owner only)
 const updateFeedback = async (req, res) => {
   try {
-    const { rating, comment } = req.body;
-
     const feedback = await Feedback.findById(req.params.id);
 
     if (!feedback) {
-      return res.status(404).json({
-        message: "Feedback not found",
-      });
+      return res.status(404).json({ message: "Feedback not found" });
     }
 
-    // Ownership check
     if (feedback.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        message: "Not authorized",
-      });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
-    if (rating) feedback.rating = rating;
-    if (comment) feedback.comment = comment;
+    feedback.rating = req.body.rating;
+    feedback.comment = req.body.comment;
 
     await feedback.save();
 
-    res.json({
-      message: "Feedback updated",
-      feedback,
-    });
+    res.json({ message: "Updated successfully" });
+
   } catch (error) {
-    res.status(500).json({
-      message: "Update failed",
-    });
+    res.status(500).json({ message: "Update failed" });
   }
 };
 
-//Delete Feedback
-//User can delete own
-//Admin can delete any
+// Delete feedback (Owner only)
 const deleteFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.findById(req.params.id);
 
     if (!feedback) {
-      return res.status(404).json({
-        message: "Feedback not found",
-      });
+      return res.status(404).json({ message: "Feedback not found" });
     }
 
-    if (
-      feedback.user.toString() !== req.user._id.toString() &&
-      !req.user.isAdmin
-    ) {
-      return res.status(403).json({
-        message: "Not authorized",
-      });
+    if (feedback.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     await feedback.deleteOne();
 
-    res.json({
-      message: "Feedback deleted",
-    });
+    res.json({ message: "Deleted successfully" });
+
   } catch (error) {
-    res.status(500).json({
-      message: "Delete failed",
-    });
+    res.status(500).json({ message: "Delete failed" });
   }
 };
 
 module.exports = {
   createFeedback,
-  getMyFeedback,
   getAllFeedback,
   updateFeedback,
   deleteFeedback,
