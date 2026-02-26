@@ -13,6 +13,10 @@ import AdminProjectUpdatePage from "./pages/AdminProjectUpdatePage";
 import NotificationsPage from "./pages/NotificationsPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminCategoriesPage from "./pages/AdminCategoriesPage";
+import AdminEditUserPage from "./pages/AdminEditUserPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import FeedbackPage from "./pages/FeedbackPage";
 
 function App() {
   return (
@@ -33,6 +37,10 @@ function App() {
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/admin/users" element={<AdminUsersPage />} />
         <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+        <Route path="/admin/users/:id/edit" element={<AdminEditUserPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/feedback" element={<FeedbackPage />} />
       </Routes>
     </>
   );
