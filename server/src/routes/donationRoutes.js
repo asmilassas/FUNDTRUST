@@ -15,26 +15,12 @@ const {
 const { protect, admin } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
 
-
-// ======================================
-// PUBLIC ROUTES
-// ======================================
-
 // Transparency summary
 router.get("/transparency", listTransparencySummary);
 
-
-// ======================================
-// USER ROUTES (Protected)
-// ======================================
-
+// Protected User Routes
 // One-time donation (supports bank receipt upload)
-router.post(
-  "/one-time",
-  protect,
-  upload.single("receiptImage"),
-  createOneTimeDonation
-);
+router.post("/one-time", protect, upload.single("receiptImage"), createOneTimeDonation);
 
 // Recurring donation
 router.post("/recurring", protect, createRecurringDonation);
@@ -45,34 +31,14 @@ router.get("/me", protect, listUserDonations);
 // View donation receipt
 router.get("/:id/receipt", protect, acknowledgeDonation);
 
-
-// ======================================
-// ADMIN ROUTES
-// ======================================
-
+//Admin Routes
 // Get all pending bank donations
-router.get(
-  "/admin/pending",
-  protect,
-  admin,
-  getPendingDonations
-);
+router.get("/admin/pending", protect, admin, getPendingDonations);
 
 // Approve donation
-router.put(
-  "/:id/approve",
-  protect,
-  admin,
-  approveDonation
-);
+router.put("/:id/approve", protect, admin, approveDonation);
 
 // Reject donation
-router.put(
-  "/:id/reject",
-  protect,
-  admin,
-  rejectDonation
-);
-
+router.put("/:id/reject", protect, admin, rejectDonation);
 
 module.exports = router;

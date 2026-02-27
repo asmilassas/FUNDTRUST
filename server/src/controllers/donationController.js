@@ -7,8 +7,6 @@ const sendEmail = require("../utils/emailService");
 let stripeClient = null;
 try {
   if (process.env.STRIPE_SECRET_KEY) {
-    // Lazy load Stripe only when the secret is configured to keep local dev flexible.
-    // eslint-disable-next-line global-require
     const stripe = require('stripe');
     stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
   }
@@ -90,8 +88,7 @@ if (goal) {
   }
 }
 
-    //  BANK TRANSFER LOGIC
-    
+    //Bank Transfer Logic
     if (paymentMethod === "bank") {
       if (!req.file) {
         return res.status(400).json({
@@ -117,10 +114,7 @@ if (goal) {
       });
     }
 
-    // =========================
-    //  STRIPE (SIMULATION MODE)
-    // =========================
-
+    //Stripe (Simulation Mode)
     const donation = await createDonationRecord({
       user: req.user,
       charity,
@@ -151,11 +145,7 @@ if (goal) {
   });
 }
 
-
-   // ==========================
-// REAL STRIPE PAYMENT
-// ==========================
-
+//Real stripe payment
 const paymentIntent = await stripeClient.paymentIntents.create({
   amount: Math.round(amount * 100),
   currency,
@@ -167,30 +157,30 @@ const paymentIntent = await stripeClient.paymentIntents.create({
   receipt_email: req.user.email,
 });
 
-// Mark donation successful
+//Mark donation as successful
 donation.status = "succeeded";
 donation.paymentMethod = "stripe";
 donation.stripePaymentIntentId = paymentIntent.id;
 
 await donation.save();
 
-// Update charity goal
+//Update charity goal
 if (charity.goals && charity.goals.length > 0) {
   charity.goals[0].amountRaised += Number(amount);
   await charity.save();
 }
 
-// Send success email
+//Send success email
 await sendEmail(
   req.user.email,
   "Donation Successful - FundTrust",
   `Hi ${req.user.name},
 
-Thank you for your donation of $${amount} to "${charity.name}".
+  Thank you for your donation of $${amount} to "${charity.name}".
 
-Your support makes a real difference ❤️
+  Your support makes a real difference 
 
-FundTrust Team`
+  FundTrust Team`
 );
 
 return res.status(201).json({
@@ -205,7 +195,6 @@ return res.status(201).json({
     });
   }
 };
-
 
 const frequencyMap = {
   monthly: { interval: 'month', intervalCount: 1 },
@@ -427,7 +416,7 @@ const approveDonation = async (req, res) => {
       });
     }
 
-    // ✅ Approve
+    //Approve
     donation.status = "succeeded";
     await donation.save();
 
@@ -435,19 +424,19 @@ const approveDonation = async (req, res) => {
     goal.amountRaised += donation.amount;
     await charity.save();
 
-    // ✅ Send Approval Email
+    //Send Approval Email
     await sendEmail(
       donation.user.email,
       "Donation Approved - FundTrust",
       `Hi ${donation.user.name},
 
-Great news!
+      Great news!
 
-Your donation of $${donation.amount} to "${charity.name}" has been approved successfully.
+      Your donation of $${donation.amount} to "${charity.name}" has been approved successfully.
 
-Thank you for supporting FundTrust ❤️
+      Thank you for supporting FundTrust
 
-FundTrust Team`
+      FundTrust Team`
     );
 
     // If project just reached full funding
@@ -466,7 +455,7 @@ FundTrust Team`
         await User.findByIdAndUpdate(d.user._id, {
           $push: {
             notifications: {
-              message: `🎉 The project "${charity.name}" has been fully funded! Thank you for your support.`,
+              message: `The project "${charity.name}" has been fully funded! Thank you for your support.`,
             },
           },
         });
@@ -483,13 +472,11 @@ FundTrust Team`
   }
 };
 
-
-
 const getPendingDonations = async (req, res) => {
   try {
     const donations = await Donation.find({
       paymentMethod: "bank",
-      status: "pending",   // 🔥 MUST be pending only
+      status: "pending",   //Must be pending only
     })
       .populate("user", "name email")
       .populate("charity", "name");
@@ -524,20 +511,19 @@ const rejectDonation = async (req, res) => {
 
     await donation.save();
 
-    // ✅ Send Rejection Email
+    //Send Rejection Email
     await sendEmail(
       donation.user.email,
       "Donation Rejected - FundTrust",
       `Hi ${donation.user.name},
 
-Unfortunately your donation of $${donation.amount} to "${donation.charity.name}" was rejected.
+      Unfortunately your donation of $${donation.amount} to "${donation.charity.name}" was rejected.
 
-Reason:
-${donation.rejectionReason}
+      Reason: ${donation.rejectionReason}
 
-If this was a mistake, please contact support.
+      If this was a mistake, please contact support.
 
-FundTrust Team`
+      FundTrust Team`
     );
 
     // Add notification
@@ -546,7 +532,7 @@ FundTrust Team`
     await User.findByIdAndUpdate(donation.user._id, {
       $push: {
         notifications: {
-          message: `❌ Your donation was rejected. Reason: ${donation.rejectionReason}`,
+          message: `Your donation was rejected. Reason: ${donation.rejectionReason}`,
           createdAt: new Date(),
         },
       },
@@ -559,9 +545,6 @@ FundTrust Team`
     res.status(500).json({ message: "Rejection failed" });
   }
 };
-
-
-
 
 module.exports = {
   createOneTimeDonation,

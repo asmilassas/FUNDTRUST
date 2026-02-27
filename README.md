@@ -1,16 +1,12 @@
-# FundTrust
+## FundTrust
 
 FundTrust is a full-stack donation tracking web application designed to build transparency and trust between donors and non-governmental organizations (NGOs). The platform enables categorized charity management, secure Stripe-powered donations, and real-time impact tracking through a transparency dashboard.
 
 FundTrust ensures that every donation is securely processed, properly categorized, and transparently reported.
 
----
-
 ## Project Overview
 
 FundTrust connects donors with verified charities and provides visibility into how funds are allocated. The system supports both one-time and recurring donations, tracks impact metrics, and enforces role-based access control for secure administration.
-
----
 
 ## Core Features
 
@@ -45,11 +41,8 @@ FundTrust connects donors with verified charities and provides visibility into h
 - Structured data for dashboard visualization
 - MongoDB aggregation pipeline for analytics
 
----
-
 ## Project Structure
 
-```
 FundTrust/
 ├── client/               # React (Vite) frontend
 │   ├── src/
@@ -67,9 +60,6 @@ FundTrust/
 │   └── package.json
 │
 └── README.md
-```
-
----
 
 ## Technology Stack
 
@@ -86,15 +76,11 @@ FundTrust/
 - Axios
 - React Router DOM
 
----
-
 ## Prerequisites
 
 - Node.js 18+
 - MongoDB (Local or Atlas)
 - Stripe account (Test keys)
-
----
 
 ## Backend Setup
 
@@ -138,8 +124,6 @@ Backend runs at:
 http://localhost:5000/api
 ```
 
----
-
 ##  API Endpoints Overview
 
 ### Authentication
@@ -162,7 +146,6 @@ http://localhost:5000/api
 - `GET /api/donations/transparency`
 - `GET /api/donations/me`
 
----
 
 ##  Stripe Integration
 
@@ -206,8 +189,6 @@ FundTrust demonstrates:
 
 It is designed as a full-stack MERN project suitable for university-level evaluation.
 
----
-
 ##  Future Improvements
 
 - Stripe webhook integration
@@ -217,12 +198,8 @@ It is designed as a full-stack MERN project suitable for university-level evalua
 - Docker containerization
 - Automated API and UI testing
 
----
-
 ##  Project Vision
 
 FundTrust aims to create a reliable and transparent digital ecosystem where donors can confidently contribute to social causes, knowing exactly how their funds are managed and utilized.
-
----
 
 **FundTrust — Building Trust Through Transparent Funding.**

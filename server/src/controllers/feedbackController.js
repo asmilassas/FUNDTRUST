@@ -1,7 +1,7 @@
 const Feedback = require("../models/Feedback");
 const sendEmail = require("../utils/emailService");
 
-// Create feedback (Logged user only)
+//Create feedback (Logged user only)
 const createFeedback = async (req, res) => {
   try {
     const { rating, comment } = req.body;
@@ -20,18 +20,18 @@ const createFeedback = async (req, res) => {
 
     await feedback.save();
 
-    // ✅ Send Thank You Email
+    //Send Thank You Email
     await sendEmail(
       req.user.email,
       "Thank You for Your Feedback - FundTrust",
       `Hi ${req.user.name},
 
-Thank you for submitting your feedback to FundTrust.
+      Thank you for submitting your feedback to FundTrust.
 
-We truly appreciate your support and contribution.
+      We truly appreciate your support and contribution.
 
-Best regards,
-FundTrust Team`
+      Best regards,
+      FundTrust Team`
     );
 
     res.status(201).json({
@@ -47,7 +47,7 @@ FundTrust Team`
   }
 };
 
-// Get all feedback (Public)
+//Get all feedback (Public)
 const getAllFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.find()
@@ -61,7 +61,7 @@ const getAllFeedback = async (req, res) => {
   }
 };
 
-// Update feedback (Owner only)
+//Update feedback (Owner only)
 const updateFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.findById(req.params.id);
@@ -86,7 +86,7 @@ const updateFeedback = async (req, res) => {
   }
 };
 
-// Delete feedback (Owner only)
+//Delete feedback (Owner only)
 const deleteFeedback = async (req, res) => {
   try {
     const feedback = await Feedback.findById(req.params.id);

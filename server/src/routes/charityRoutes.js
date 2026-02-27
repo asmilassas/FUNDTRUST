@@ -13,17 +13,12 @@ const {
 const { protect, admin } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
 
-// =============================
-// Public Routes
-// =============================
 
+// Public Routes
 router.get("/", getCharities);
 router.get("/:id", getCharity);
 
-// =============================
 // Admin Routes
-// =============================
-
 router.post("/", protect, admin, createCharity);
 router.patch("/:id", protect, admin, updateCharity);
 router.delete("/:id", protect, admin, deleteCharity);
