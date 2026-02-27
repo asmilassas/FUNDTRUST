@@ -152,7 +152,51 @@ if (goal) {
 }
 
 
-    // (Real Stripe logic stays same if you enable later)
+   // ==========================
+// REAL STRIPE PAYMENT
+// ==========================
+
+const paymentIntent = await stripeClient.paymentIntents.create({
+  amount: Math.round(amount * 100),
+  currency,
+  description: `Donation to ${charity.name}`,
+  metadata: {
+    donationId: donation._id.toString(),
+    charityId: charity._id.toString(),
+  },
+  receipt_email: req.user.email,
+});
+
+// Mark donation successful
+donation.status = "succeeded";
+donation.paymentMethod = "stripe";
+donation.stripePaymentIntentId = paymentIntent.id;
+
+await donation.save();
+
+// Update charity goal
+if (charity.goals && charity.goals.length > 0) {
+  charity.goals[0].amountRaised += Number(amount);
+  await charity.save();
+}
+
+// Send success email
+await sendEmail(
+  req.user.email,
+  "Donation Successful - FundTrust",
+  `Hi ${req.user.name},
+
+Thank you for your donation of $${amount} to "${charity.name}".
+
+Your support makes a real difference ❤️
+
+FundTrust Team`
+);
+
+return res.status(201).json({
+  message: "Donation successful",
+  donation,
+});
 
   } catch (error) {
     console.error("Create one-time donation error", error);
