@@ -13,22 +13,34 @@ function Register() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setStatus(null);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setStatus(null);
 
-    try {
-      await api.post("/auth/register", form);
-      setStatus({ type: "success", text: "Account created! Redirecting to login…" });
-      setTimeout(() => navigate("/login"), 1800);
-    } catch (error) {
-      const msg = error?.response?.data?.message || "Registration failed. Please try again.";
-      setStatus({ type: "error", text: msg });
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    await api.post("/auth/register", form);
+
+    // ✅ Save email for OTP page
+    localStorage.setItem("verifyEmail", form.email);
+
+    setStatus({
+      type: "success",
+      text: "OTP sent to your email. Redirecting to verification page…",
+    });
+
+    // ✅ Redirect to verify page
+    setTimeout(() => navigate("/verify-otp"), 1500);
+
+  } catch (error) {
+    const msg =
+      error?.response?.data?.message ||
+      "Registration failed. Please try again.";
+    setStatus({ type: "error", text: msg });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const hasError = status?.type === "error";
 
