@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
     isAdmin: { type: Boolean, default: false },
     preferences: { type: preferenceSchema, default: () => ({}) },
 
-    // 🔐 OTP Fields
+    //OTP Fields
     isVerified: {
       type: Boolean,
       default: false,
@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
     },
 
-    // 🔔 Notifications
+    //Notifications
     notifications: [
       {
         message: { type: String },

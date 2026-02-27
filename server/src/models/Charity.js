@@ -25,8 +25,6 @@ const transparencyUpdateSchema = new mongoose.Schema(
   }
 );
 
-
-
 const charitySchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
