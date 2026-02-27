@@ -1,14 +1,14 @@
 const User = require("../models/User");
 
 /*
-  USER PROFILE FUNCTIONS
+   USER PROFILE FUNCTIONS
 */
 
 const getProfile = (req, res) => {
   return res.json({ user: req.user });
 };
 
-//Update user profile (name + password)
+// ✅ Update user profile (name + password)
 const updateProfile = async (req, res) => {
   try {
     const { name, currentPassword, newPassword } = req.body;
@@ -19,12 +19,12 @@ const updateProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    //Update name
+    // 🔹 Update name
     if (name) {
       user.name = name;
     }
 
-    //Update password
+    // 🔹 Update password
     if (newPassword) {
       if (!currentPassword) {
         return res.status(400).json({
@@ -40,7 +40,7 @@ const updateProfile = async (req, res) => {
         });
       }
 
-      user.password = newPassword; //auto hashed by pre-save
+      user.password = newPassword; // auto hashed by pre-save
     }
 
     await user.save();
@@ -86,10 +86,10 @@ const updatePreferences = async (req, res) => {
 };
 
 /* 
-  ADMIN FUNCTIONS
+   ADMIN FUNCTIONS
 */
 
-// Get All Users (Admin Only)
+//  Get All Users (Admin Only)
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
@@ -101,7 +101,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-//Delete User (Admin Only)
+//  Delete User (Admin Only)
 const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -185,6 +185,8 @@ const updateUserByAdmin = async (req, res) => {
     res.status(500).json({ message: "Update failed" });
   }
 };
+
+
 
 module.exports = {
   getProfile,

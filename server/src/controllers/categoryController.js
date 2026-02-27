@@ -80,3 +80,5 @@ exports.deleteCategory = async (req, res) => {
     res.status(500).json({ message: "Unable to delete category" });
   }
 };
+
+
