@@ -42,7 +42,7 @@ const register = async (req, res) => {
 
     await user.save();
 
-    // ✅ Send OTP Email
+    //Send OTP Email
     await sendEmail(
       email,
       "Verify Your FundTrust Account",
@@ -82,7 +82,7 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // 🔥 BLOCK IF NOT VERIFIED
+    //BLOCK IF NOT VERIFIED
     if (!user.isVerified) {
       return res.status(403).json({
         message: "Please verify your email before logging in",
