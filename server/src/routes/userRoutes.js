@@ -13,8 +13,9 @@ const {
 
 const { protect, admin } = require("../middlewares/authMiddleware");
 
-/*
-  USER ROUTES (Protected)
+
+/* 
+   USER ROUTES (Protected)
 */
 
 // Get logged-in user profile
@@ -40,9 +41,9 @@ router.get("/notifications", protect, async (req, res) => {
   }
 });
 
-/* 
-  ADMIN ROUTES
-*/
+/* ===============================
+   ADMIN ROUTES
+================================= */
 
 // Get all users
 router.get("/admin/all", protect, admin, getAllUsers);
