@@ -78,5 +78,4 @@ sendEmail(
 
 app.use("/uploads", express.static("uploads"));
 
-
 startServer();
