@@ -70,5 +70,4 @@ const startServer = async () => {
 
 app.use("/uploads", express.static("uploads"));
 
-
 startServer();
