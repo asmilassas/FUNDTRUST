@@ -68,6 +68,14 @@ const startServer = async () => {
   }
 };
 
+const sendEmail = require("./utils/emailService");
+
+sendEmail(
+  "llllasmilahamed2002@gmail.com",
+  "Test Email",
+  "FundTrust email integration is working!"
+);
+
 app.use("/uploads", express.static("uploads"));
 
 

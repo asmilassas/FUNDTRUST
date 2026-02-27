@@ -12,17 +12,10 @@ function ProjectPage() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [message, setMessage] = useState("");
 
-  // 🔥 Feedback State
-  const [feedback, setFeedback] = useState([]);
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState("");
-  const [editingId, setEditingId] = useState(null);
-
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     fetchProject();
-    fetchFeedback();
   }, [id]);
 
   const fetchProject = async () => {
@@ -34,22 +27,14 @@ function ProjectPage() {
     }
   };
 
-  // 🔥 Fetch Charity Feedback
-  const fetchFeedback = async () => {
-    try {
-      const res = await api.get(`/feedback/charity/${id}`);
-      setFeedback(res.data.feedback || []);
-    } catch (err) {
-      console.error("Error fetching feedback:", err);
-    }
-  };
-
   if (!project) return <p style={{ padding: "40px" }}>Loading...</p>;
 
   const goal = project.goals?.[0];
+
   const progress = goal
     ? Math.min((goal.amountRaised / goal.targetAmount) * 100, 100)
     : 0;
+
   const isFullyFunded = goal
     ? goal.amountRaised >= goal.targetAmount
     : false;
@@ -57,10 +42,26 @@ function ProjectPage() {
   // 💰 Donation Handler
   const handleDonate = async (e) => {
     e.preventDefault();
-    if (!user) return navigate("/login");
-    if (user.isAdmin) return setMessage("Admin users are not allowed to donate.");
-    if (isFullyFunded) return setMessage("This project is already fully funded.");
-    if (!amount || amount <= 0) return setMessage("Please enter valid amount.");
+
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (user.isAdmin) {
+      setMessage("Admin users cannot donate.");
+      return;
+    }
+
+    if (isFullyFunded) {
+      setMessage("This project is already fully funded.");
+      return;
+    }
+
+    if (!amount || amount <= 0) {
+      setMessage("Enter a valid amount.");
+      return;
+    }
 
     try {
       const formData = new FormData();
@@ -69,7 +70,10 @@ function ProjectPage() {
       formData.append("paymentMethod", paymentMethod);
 
       if (paymentMethod === "bank") {
-        if (!selectedFile) return setMessage("Upload receipt image.");
+        if (!selectedFile) {
+          setMessage("Upload receipt image.");
+          return;
+        }
         formData.append("receiptImage", selectedFile);
       }
 
@@ -80,48 +84,14 @@ function ProjectPage() {
       );
 
       setMessage(response.data.message);
-      fetchProject();
       setAmount("");
       setSelectedFile(null);
+      fetchProject();
 
     } catch (error) {
       setMessage(error.response?.data?.message || "Donation failed.");
     }
   };
-
-  // 🔥 Submit / Update Feedback
-  const submitFeedback = async () => {
-    if (!comment) return alert("Comment required");
-
-    try {
-      if (editingId) {
-        await api.put(`/feedback/${editingId}`, { rating, comment });
-        setEditingId(null);
-      } else {
-        await api.post("/feedback", {
-          charityId: id,
-          rating,
-          comment,
-        });
-      }
-
-      setRating(5);
-      setComment("");
-      fetchFeedback();
-
-    } catch (error) {
-      alert(error.response?.data?.message || "Failed to submit feedback");
-    }
-  };
-
-  // 🔥 Average Rating
-  const averageRating =
-    feedback.length > 0
-      ? (
-          feedback.reduce((sum, f) => sum + f.rating, 0) /
-          feedback.length
-        ).toFixed(1)
-      : 0;
 
   return (
     <div style={{ padding: "50px", maxWidth: "900px", margin: "auto" }}>
@@ -136,7 +106,13 @@ function ProjectPage() {
         <div style={{ marginTop: "30px" }}>
           <h3>Funding Progress</h3>
           <p>${goal.amountRaised} raised of ${goal.targetAmount}</p>
-          <div style={{ background: "#eee", height: "20px", borderRadius: "8px" }}>
+
+          <div style={{
+            background: "#eee",
+            height: "20px",
+            borderRadius: "8px",
+            overflow: "hidden"
+          }}>
             <div
               style={{
                 width: `${progress}%`,
@@ -145,88 +121,83 @@ function ProjectPage() {
               }}
             />
           </div>
+
           <p>{progress.toFixed(1)}% completed</p>
+
+          {isFullyFunded && (
+            <p style={{ color: "green", fontWeight: "bold" }}>
+              🎉 Fully Funded
+            </p>
+          )}
         </div>
       )}
 
       <hr style={{ margin: "40px 0" }} />
 
-      {/* 🔥 Feedback Section */}
-      <h2>⭐ Feedback</h2>
-      <h3>Average Rating: {averageRating}</h3>
+      {/* 💰 Donation Section */}
+      <h2>Make a Donation</h2>
 
-      {user && (
-        <div style={{ marginBottom: "20px" }}>
-          <select
-            value={rating}
-            onChange={(e) => setRating(Number(e.target.value))}
-          >
-            {[5,4,3,2,1].map((r) => (
-              <option key={r} value={r}>{r} Star</option>
-            ))}
-          </select>
-
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Write your feedback..."
-            style={{ width: "100%", marginTop: "10px" }}
-          />
-
-          <button
-            onClick={submitFeedback}
-            style={{
-              marginTop: "10px",
-              padding: "8px 15px",
-              background: "#2c7be5",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-            }}
-          >
-            {editingId ? "Update" : "Submit"}
-          </button>
-        </div>
-      )}
-
-      {feedback.map((f) => (
-        <div
-          key={f._id}
+      {!user ? (
+        <button
+          onClick={() => navigate("/login")}
           style={{
-            background: "#f3f4f6",
-            padding: "15px",
-            borderRadius: "8px",
-            marginBottom: "10px",
+            padding: "10px 20px",
+            background: "#2c7be5",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer"
           }}
         >
-          <strong>{f.user?.name}</strong>
-          <div>{"⭐".repeat(f.rating)}</div>
-          <p>{f.comment}</p>
+          Login to Donate
+        </button>
+      ) : user.isAdmin ? (
+        <p style={{ color: "red" }}>
+          Admin users cannot donate.
+        </p>
+      ) : (
+        <form onSubmit={handleDonate}>
+          <input
+            type="number"
+            placeholder="Enter amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            style={{ width: "100%", padding: "10px", marginBottom: "15px" }}
+          />
 
-          {user && user._id === f.user?._id && (
-            <>
-              <button
-                onClick={() => {
-                  setEditingId(f._id);
-                  setRating(f.rating);
-                  setComment(f.comment);
-                }}
-              >
-                Edit
-              </button>
+          <select
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            style={{ width: "100%", padding: "10px", marginBottom: "15px" }}
+          >
+            <option value="stripe">Stripe</option>
+            <option value="bank">Bank Transfer</option>
+          </select>
 
-              <button
-                onClick={async () => {
-                  await api.delete(`/feedback/${f._id}`);
-                  fetchFeedback();
-                }}
-              >
-                Delete
-              </button>
-            </>
+          {paymentMethod === "bank" && (
+            <input
+              type="file"
+              onChange={(e) => setSelectedFile(e.target.files[0])}
+              style={{ marginBottom: "15px" }}
+            />
           )}
-        </div>
-      ))}
+
+          <button
+            type="submit"
+            disabled={isFullyFunded}
+            style={{
+              padding: "12px 25px",
+              background: isFullyFunded ? "gray" : "#2c7be5",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: isFullyFunded ? "not-allowed" : "pointer"
+            }}
+          >
+            {isFullyFunded ? "Fully Funded" : "Donate"}
+          </button>
+        </form>
+      )}
 
       {message && (
         <p style={{ marginTop: "20px", color: "green" }}>

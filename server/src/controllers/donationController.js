@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Charity = require('../models/Charity');
 const Donation = require('../models/Donation');
 const { generateReceipt } = require('../utils/receipt');
+const sendEmail = require("../utils/emailService");
 
 let stripeClient = null;
 try {
@@ -345,7 +346,9 @@ const acknowledgeDonation = async (req, res) => {
 
 const approveDonation = async (req, res) => {
   try {
-    const donation = await Donation.findById(req.params.id);
+    const donation = await Donation.findById(req.params.id)
+      .populate("user")
+      .populate("charity");
 
     if (!donation) {
       return res.status(404).json({ message: "Donation not found" });
@@ -359,7 +362,7 @@ const approveDonation = async (req, res) => {
       return res.json({ message: "Donation already approved" });
     }
 
-    const charity = await Charity.findById(donation.charity);
+    const charity = donation.charity;
 
     if (!charity || !charity.goals || charity.goals.length === 0) {
       return res.status(400).json({ message: "Project goal not found" });
@@ -368,32 +371,42 @@ const approveDonation = async (req, res) => {
     const goal = charity.goals[0];
     const remainingAmount = goal.targetAmount - goal.amountRaised;
 
-    //  Already completed
     if (remainingAmount <= 0) {
       return res.status(400).json({
         message: "Project already fully funded",
       });
     }
 
-    //  Prevent overfunding
     if (donation.amount > remainingAmount) {
       return res.status(400).json({
         message: `Only $${remainingAmount} remaining. Donation exceeds limit.`,
       });
     }
 
-    //  Approve donation
+    // ✅ Approve
     donation.status = "succeeded";
     await donation.save();
 
-    // Save previous amount for comparison
     const previousAmount = goal.amountRaised;
-
-    // Update goal
     goal.amountRaised += donation.amount;
     await charity.save();
 
-    //  If project JUST reached full funding → notify donors
+    // ✅ Send Approval Email
+    await sendEmail(
+      donation.user.email,
+      "Donation Approved - FundTrust",
+      `Hi ${donation.user.name},
+
+Great news!
+
+Your donation of $${donation.amount} to "${charity.name}" has been approved successfully.
+
+Thank you for supporting FundTrust ❤️
+
+FundTrust Team`
+    );
+
+    // If project just reached full funding
     if (
       previousAmount < goal.targetAmount &&
       goal.amountRaised >= goal.targetAmount
@@ -448,7 +461,9 @@ const rejectDonation = async (req, res) => {
   try {
     const { reason } = req.body;
 
-    const donation = await Donation.findById(req.params.id);
+    const donation = await Donation.findById(req.params.id)
+      .populate("user")
+      .populate("charity");
 
     if (!donation) {
       return res.status(404).json({ message: "Donation not found" });
@@ -465,10 +480,26 @@ const rejectDonation = async (req, res) => {
 
     await donation.save();
 
-    //  Add notification to user
+    // ✅ Send Rejection Email
+    await sendEmail(
+      donation.user.email,
+      "Donation Rejected - FundTrust",
+      `Hi ${donation.user.name},
+
+Unfortunately your donation of $${donation.amount} to "${donation.charity.name}" was rejected.
+
+Reason:
+${donation.rejectionReason}
+
+If this was a mistake, please contact support.
+
+FundTrust Team`
+    );
+
+    // Add notification
     const User = require("../models/User");
 
-    await User.findByIdAndUpdate(donation.user, {
+    await User.findByIdAndUpdate(donation.user._id, {
       $push: {
         notifications: {
           message: `❌ Your donation was rejected. Reason: ${donation.rejectionReason}`,

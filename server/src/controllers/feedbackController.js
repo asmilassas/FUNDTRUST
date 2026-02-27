@@ -1,4 +1,5 @@
 const Feedback = require("../models/Feedback");
+const sendEmail = require("../utils/emailService");
 
 // Create feedback (Logged user only)
 const createFeedback = async (req, res) => {
@@ -6,19 +7,43 @@ const createFeedback = async (req, res) => {
     const { rating, comment } = req.body;
 
     if (!rating || !comment) {
-      return res.status(400).json({ message: "All fields required" });
+      return res.status(400).json({
+        message: "Rating and comment are required",
+      });
     }
 
-    const feedback = await Feedback.create({
+    const feedback = new Feedback({
       user: req.user._id,
       rating,
       comment,
     });
 
-    res.status(201).json({ feedback });
+    await feedback.save();
+
+    // ✅ Send Thank You Email
+    await sendEmail(
+      req.user.email,
+      "Thank You for Your Feedback - FundTrust",
+      `Hi ${req.user.name},
+
+Thank you for submitting your feedback to FundTrust.
+
+We truly appreciate your support and contribution.
+
+Best regards,
+FundTrust Team`
+    );
+
+    res.status(201).json({
+      message: "Feedback created successfully",
+      feedback,
+    });
 
   } catch (error) {
-    res.status(500).json({ message: "Failed to create feedback" });
+    console.error("Create feedback error:", error);
+    res.status(500).json({
+      message: "Failed to create feedback",
+    });
   }
 };
 
