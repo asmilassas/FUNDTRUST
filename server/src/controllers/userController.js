@@ -8,28 +8,56 @@ const getProfile = (req, res) => {
   return res.json({ user: req.user });
 };
 
+// ✅ Update user profile (name + password)
 const updateProfile = async (req, res) => {
   try {
-    const { name, avatarUrl } = req.body;
+    const { name, currentPassword, newPassword } = req.body;
 
-    if (!name && !avatarUrl) {
-      return res.status(400).json({ message: "Nothing to update" });
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const updates = {};
-    if (name) updates.name = name;
-    if (avatarUrl) updates.avatarUrl = avatarUrl;
+    // 🔹 Update name
+    if (name) {
+      user.name = name;
+    }
 
-    const user = await User.findByIdAndUpdate(req.user._id, updates, {
-      new: true,
-      runValidators: true,
-      select: "-password",
+    // 🔹 Update password
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({
+          message: "Current password is required",
+        });
+      }
+
+      const isMatch = await user.comparePassword(currentPassword);
+
+      if (!isMatch) {
+        return res.status(400).json({
+          message: "Current password is incorrect",
+        });
+      }
+
+      user.password = newPassword; // auto hashed by pre-save
+    }
+
+    await user.save();
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
     });
 
-    return res.json({ user });
   } catch (error) {
-    console.error("Update profile error", error);
-    return res.status(500).json({ message: "Unable to update profile" });
+    console.error(error);
+    res.status(500).json({ message: "Profile update failed" });
   }
 };
 

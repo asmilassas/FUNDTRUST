@@ -53,11 +53,16 @@ function Navbar() {
           ) : (
             <>
               {/* User Badge */}
-              <div className="user-badge">
-                <div className="user-avatar">{getInitials(user.name)}</div>
-                {user.name}
-                {user.isAdmin && <span className="admin-badge">Admin</span>}
-              </div>
+              <div
+                 className="user-badge"
+                 style={{ cursor: "pointer" }}
+                 onClick={() => navigate("/profile")}
+                 title="Go to Profile"
+>
+             <div className="user-avatar">{getInitials(user.name)}</div>
+                  {user.name}
+                  {user.isAdmin && <span className="admin-badge">Admin</span>}
+             </div>
 
               <div className="nav-divider" />
 
