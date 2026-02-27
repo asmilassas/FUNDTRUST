@@ -25,8 +25,6 @@ const transparencyUpdateSchema = new mongoose.Schema(
   }
 );
 
-
-
 const charitySchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -57,6 +55,5 @@ const charitySchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
 
 module.exports = mongoose.model('Charity', charitySchema);
