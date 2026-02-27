@@ -18,6 +18,7 @@ import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import FeedbackPage from "./pages/FeedbackPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/feedback" element={<FeedbackPage />} />
         <Route path="/verify-otp" element={<VerifyOtpPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </>
   );

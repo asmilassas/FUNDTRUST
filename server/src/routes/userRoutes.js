@@ -13,9 +13,10 @@ const {
 
 const { protect, admin } = require("../middlewares/authMiddleware");
 
-/* ===============================
+
+/* 
    USER ROUTES (Protected)
-================================= */
+*/
 
 // Get logged-in user profile
 router.get("/me", protect, getProfile);
