@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import CategoryPage from "./pages/CategoryPage";
@@ -19,33 +19,44 @@ import ContactPage from "./pages/ContactPage";
 import FeedbackPage from "./pages/FeedbackPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import ProfilePage from "./pages/ProfilePage";
+import Footer from "./components/Footer";
+import SuccessStoriesPage from "./pages/SuccessStoriesPage";
+
+// Pages that should NOT show the footer
+const NO_FOOTER_PAGES = ["/login", "/register", "/verify-otp"];
 
 function App() {
+  const location = useLocation();
+  const showFooter = !NO_FOOTER_PAGES.includes(location.pathname);
+
   return (
     <>
       <Navbar />
 
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/category/:id" element={<CategoryPage />} />
-        <Route path="/project/:id" element={<ProjectPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/my-donations" element={<MyDonations />} />
-        <Route path="/admin/project/:id/update" element={<AdminUpdatePage />} />
-        <Route path="/admin/projects" element={<AdminProjectsPage />} />
-        <Route path="/admin/projects/:id" element={<AdminProjectUpdatePage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/admin/users" element={<AdminUsersPage />} />
-        <Route path="/admin/categories" element={<AdminCategoriesPage />} />
-        <Route path="/admin/users/:id/edit" element={<AdminEditUserPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/feedback" element={<FeedbackPage />} />
-        <Route path="/verify-otp" element={<VerifyOtpPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/"                          element={<Home />} />
+        <Route path="/category/:id"              element={<CategoryPage />} />
+        <Route path="/project/:id"               element={<ProjectPage />} />
+        <Route path="/login"                     element={<Login />} />
+        <Route path="/register"                  element={<Register />} />
+        <Route path="/admin/dashboard"           element={<AdminDashboard />} />
+        <Route path="/my-donations"              element={<MyDonations />} />
+        <Route path="/admin/project/:id/update"  element={<AdminUpdatePage />} />
+        <Route path="/admin/projects"            element={<AdminProjectsPage />} />
+        <Route path="/admin/projects/:id"        element={<AdminProjectUpdatePage />} />
+        <Route path="/notifications"             element={<NotificationsPage />} />
+        <Route path="/admin/users"               element={<AdminUsersPage />} />
+        <Route path="/admin/categories"          element={<AdminCategoriesPage />} />
+        <Route path="/admin/users/:id/edit"      element={<AdminEditUserPage />} />
+        <Route path="/about"                     element={<AboutPage />} />
+        <Route path="/contact"                   element={<ContactPage />} />
+        <Route path="/feedback"                  element={<FeedbackPage />} />
+        <Route path="/verify-otp"                element={<VerifyOtpPage />} />
+        <Route path="/profile"                   element={<ProfilePage />} />
+        <Route path="/success-stories"           element={<SuccessStoriesPage />} />
       </Routes>
+
+      {showFooter && <Footer />}
     </>
   );
 }

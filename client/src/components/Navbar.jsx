@@ -1,10 +1,14 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-
+import logo from "../assets/FUNDTRUST.png";
 
 function Navbar() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const navLink = (path) =>
+    `nav-link${location.pathname === path ? " nav-link--active" : ""}`;
 
   useEffect(() => {
     const updateUser = () => {
@@ -26,62 +30,71 @@ function Navbar() {
 
   const getInitials = (name) => {
     if (!name) return "U";
-    return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
   };
 
   return (
     <>
       <style>{styles}</style>
+
       <nav className="navbar">
 
         {/* Logo */}
         <Link to="/" className="navbar-logo">
-          <span className="navbar-logo-icon">❤️</span>
+          <img src={logo} alt="FundTrust Logo" className="navbar-logo-img" />
           FundTrust
         </Link>
 
         <div className="navbar-links">
+
+          {/* ── VISITOR MENU ── */}
           {!user ? (
             <>
-              <Link to="/about"    className="nav-link">About</Link>
-              <Link to="/contact"  className="nav-link">Contact</Link>
-              <Link to="/feedback" className="nav-link">Feedback</Link>
+              <Link to="/about"           className={navLink("/about")}>About</Link>
+              <Link to="/contact"         className={navLink("/contact")}>Contact</Link>
+              <Link to="/feedback"        className={navLink("/feedback")}>Feedback</Link>
+              <Link to="/success-stories" className={navLink("/success-stories")}>Success Stories</Link>
+
               <div className="nav-divider" />
+
               <Link to="/login"    className="btn-ghost">Log in</Link>
               <Link to="/register" className="btn-primary">Get Started</Link>
             </>
           ) : (
             <>
-              {/* User Badge */}
+              {/* User badge */}
               <div
-                 className="user-badge"
-                 style={{ cursor: "pointer" }}
-                 onClick={() => navigate("/profile")}
-                 title="Go to Profile"
->
-             <div className="user-avatar">{getInitials(user.name)}</div>
-                  {user.name}
-                  {user.isAdmin && <span className="admin-badge">Admin</span>}
-             </div>
+                className="user-badge"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/profile")}
+                title="Go to Profile"
+              >
+                <div className="user-avatar">{getInitials(user.name)}</div>
+                {user.name}
+                {user.isAdmin && <span className="admin-badge">Admin</span>}
+              </div>
 
               <div className="nav-divider" />
 
-              {/* Normal user links */}
+              {/* ── NORMAL USER ── */}
               {!user.isAdmin && (
                 <>
-                  <Link to="/feedback"     className="nav-link">Feedback</Link>
+                  <Link to="/feedback"     className={navLink("/feedback")}>Feedback</Link>
                   <Link to="/my-donations" className="btn-ghost">My Donations</Link>
                 </>
               )}
 
-              {/* Admin */}
+              {/* ── ADMIN ── */}
               {user.isAdmin && (
-                <Link to="/admin/dashboard" className="btn-primary">
-                  Dashboard
-                </Link>
+                <Link to="/admin/dashboard" className="btn-primary">Dashboard</Link>
               )}
 
-              {/* Notifications for normal users */}
+              {/* Notifications */}
               {!user.isAdmin && (
                 <button
                   className="btn-icon"
@@ -92,17 +105,12 @@ function Navbar() {
                 </button>
               )}
 
-              {/* Logout */}
               <button className="btn-danger" onClick={handleLogout}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
                 Logout
               </button>
             </>
           )}
+
         </div>
       </nav>
     </>
@@ -110,203 +118,228 @@ function Navbar() {
 }
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
 
-  .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 48px;
-    height: 68px;
-    background: rgba(255, 247, 238, 0.92);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(234, 88, 12, 0.1);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    box-shadow: 0 2px 20px rgba(180, 80, 20, 0.07);
-  }
+:root {
+  --navy:       #0f1f3d;
+  --navy-mid:   #1a3260;
+  --navy-light: #f5eddc;
+  --gold:       #c9963a;
+  --gold-light: #fdf5e6;
+  --gold-pale:  rgba(201,150,58,0.12);
+  --ink:        #0a1628;
+  --muted:      #5a6a82;
+  --surface:    #fdf8f0;
+  --border:     rgba(15,31,61,0.1);
+}
 
-  .navbar-logo {
-    font-family: 'Lora', serif;
-    font-size: 21px;
-    font-weight: 700;
-    color: #1c0f00;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    transition: opacity 0.2s ease;
-  }
+/* ── Base ── */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 52px;
+  height: 70px;
+  background: rgba(253,248,240,0.97);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  font-family: 'DM Sans', sans-serif;
+  box-shadow: 0 1px 0 var(--border), 0 4px 24px rgba(15,31,61,0.05);
+}
 
-  .navbar-logo:hover { opacity: 0.75; }
+/* Navy-to-gold accent line at bottom */
+.navbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
+  opacity: 0.55;
+}
 
-  .navbar-logo-icon {
-    width: 30px; height: 30px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #f97316, #fbbf24);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    box-shadow: 0 2px 8px rgba(249,115,22,0.35);
-    flex-shrink: 0;
-  }
+/* ── Logo ── */
+.navbar-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--navy);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
 
-  .navbar-links {
-    display: flex;
-    gap: 2px;
-    align-items: center;
-  }
+.navbar-logo-img { width: 32px; height: 32px; object-fit: contain; }
 
-  .nav-link {
-    color: #78583a;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    padding: 7px 13px;
-    border-radius: 8px;
-    transition: color 0.2s ease, background 0.2s ease;
-  }
+/* ── Link row ── */
+.navbar-links {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
 
-  .nav-link:hover {
-    color: #1c0f00;
-    background: rgba(234,88,12,0.07);
-  }
+/* ── Nav links ── */
+.nav-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 7px 13px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
 
-  .nav-divider {
-    width: 1px;
-    height: 20px;
-    background: rgba(234,88,12,0.15);
-    margin: 0 6px;
-  }
+.nav-link:hover {
+  background: var(--navy-light);
+  color: var(--navy);
+}
 
-  .btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    padding: 8px 16px;
-    background: transparent;
-    color: #78583a;
-    border: 1px solid rgba(234,88,12,0.2);
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.2s ease;
-  }
+/* Active state — gold underline + bold */
+.nav-link--active {
+  background: var(--gold-pale);
+  color: var(--navy);
+  font-weight: 700;
+  position: relative;
+}
 
-  .btn-ghost:hover {
-    background: rgba(234,88,12,0.06);
-    border-color: rgba(234,88,12,0.35);
-    color: #c2410c;
-  }
+.nav-link--active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 2px;
+}
 
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 9px 20px;
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 700;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    cursor: pointer;
-    text-decoration: none;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 2px 12px rgba(249,115,22,0.35);
-  }
+/* ── Divider ── */
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 8px;
+  flex-shrink: 0;
+}
 
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(249,115,22,0.45);
-  }
+/* ── Ghost button ── */
+.btn-ghost {
+  padding: 8px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  font-family: 'DM Sans', sans-serif;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
 
-  .btn-danger {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 15px;
-    background: rgba(220,38,38,0.07);
-    color: #b91c1c;
-    border: 1px solid rgba(220,38,38,0.18);
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
+.btn-ghost:hover { border-color: var(--gold); background: var(--gold-light); }
 
-  .btn-danger:hover {
-    background: rgba(220,38,38,0.13);
-    border-color: rgba(220,38,38,0.32);
-  }
+/* ── Primary button ── */
+.btn-primary {
+  padding: 9px 22px;
+  background: var(--navy);
+  color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  font-family: 'DM Sans', sans-serif;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.18s, box-shadow 0.18s;
+  box-shadow: 0 2px 12px rgba(15,31,61,0.2);
+  white-space: nowrap;
+}
 
-  .btn-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px; height: 36px;
-    background: rgba(234,88,12,0.06);
-    border: 1px solid rgba(234,88,12,0.15);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
-    transition: all 0.2s ease;
-  }
+.btn-primary:hover { background: var(--navy-mid); box-shadow: 0 4px 20px rgba(15,31,61,0.28); }
 
-  .btn-icon:hover {
-    background: rgba(234,88,12,0.12);
-    border-color: rgba(234,88,12,0.28);
-    transform: translateY(-1px);
-  }
+/* ── Danger button ── */
+.btn-danger {
+  padding: 8px 15px;
+  background: transparent;
+  border: 1.5px solid rgba(180,30,30,0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #a52020;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
 
-  .user-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 12px 5px 7px;
-    background: rgba(234,88,12,0.06);
-    border: 1px solid rgba(234,88,12,0.14);
-    border-radius: 50px;
-    font-size: 13.5px;
-    font-weight: 500;
-    color: #4a2f12;
-  }
+.btn-danger:hover { background: rgba(180,30,30,0.06); border-color: rgba(180,30,30,0.35); }
 
-  .user-avatar {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f97316, #fbbf24);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: white;
-    flex-shrink: 0;
-  }
+/* ── Icon button ── */
+.btn-icon {
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  background: var(--navy-light);
+  cursor: pointer;
+  font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, transform 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
 
-  .admin-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    background: rgba(234,88,12,0.1);
-    border: 1px solid rgba(234,88,12,0.2);
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 700;
-    color: #c2410c;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-  }
+.btn-icon:hover { background: var(--gold-pale); transform: scale(1.06); border-color: var(--gold); }
+
+/* ── User badge ── */
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px 5px 6px;
+  background: var(--navy-light);
+  border: 1.5px solid var(--border);
+  border-radius: 50px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--navy);
+  transition: border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.user-badge:hover { border-color: var(--gold); background: var(--gold-light); }
+
+.user-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700;
+  color: var(--gold);
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+
+/* ── Admin badge ── */
+.admin-badge {
+  padding: 2px 8px;
+  background: var(--gold-pale);
+  border: 1px solid rgba(201,150,58,0.3);
+  border-radius: 4px;
+  font-size: 10px; font-weight: 700;
+  color: #8a6010;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
 `;
 
 export default Navbar;
