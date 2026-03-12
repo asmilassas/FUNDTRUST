@@ -1,59 +1,76 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+
+// Layout
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+
+// Public pages
 import Home from "./pages/Home";
-import CategoryPage from "./pages/CategoryPage";
-import ProjectPage from "./pages/ProjectPage";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import AdminDashboard from "./pages/AdminDashboard";
-import MyDonations from "./pages/MyDonations";
-import AdminUpdatePage from "./pages/AdminUpdatePage";
-import AdminProjectsPage from "./pages/AdminProjectsPage";
-import AdminProjectUpdatePage from "./pages/AdminProjectUpdatePage";
-import NotificationsPage from "./pages/NotificationsPage";
-import AdminUsersPage from "./pages/AdminUsersPage";
-import AdminCategoriesPage from "./pages/AdminCategoriesPage";
-import AdminEditUserPage from "./pages/AdminEditUserPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import FeedbackPage from "./pages/FeedbackPage";
-import VerifyOtpPage from "./pages/VerifyOtpPage";
-import ProfilePage from "./pages/ProfilePage";
-import Footer from "./components/Footer";
 import SuccessStoriesPage from "./pages/SuccessStoriesPage";
+import CategoryPage from "./pages/CategoryPage";
+import ProjectPage from "./pages/ProjectPage";
 
-// Pages that should NOT show the footer
-const NO_FOOTER_PAGES = ["/login", "/register", "/verify-otp"];
+// Auth pages
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import VerifyOtpPage from "./pages/VerifyOtpPage";
+
+// User pages
+import MyDonations from "./pages/MyDonations";
+import NotificationsPage from "./pages/NotificationsPage";
+import ProfilePage from "./pages/ProfilePage";
+
+// Admin pages
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminProjectsPage from "./pages/AdminProjectsPage";
+import AdminProjectUpdatePage from "./pages/AdminProjectUpdatePage";
+import AdminUpdatePage from "./pages/AdminUpdatePage";
+import AdminCategoriesPage from "./pages/AdminCategoriesPage";
+import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminEditUserPage from "./pages/AdminEditUserPage";
+
+// Footer is hidden on admin and auth pages
+const NO_FOOTER = ["/admin", "/login", "/register", "/verify-otp"];
 
 function App() {
-  const location = useLocation();
-  const showFooter = !NO_FOOTER_PAGES.includes(location.pathname);
+  const { pathname } = useLocation();
+  const showFooter = !NO_FOOTER.some((p) => pathname.startsWith(p));
 
   return (
     <>
       <Navbar />
 
       <Routes>
-        <Route path="/"                          element={<Home />} />
-        <Route path="/category/:id"              element={<CategoryPage />} />
-        <Route path="/project/:id"               element={<ProjectPage />} />
-        <Route path="/login"                     element={<Login />} />
-        <Route path="/register"                  element={<Register />} />
-        <Route path="/admin/dashboard"           element={<AdminDashboard />} />
-        <Route path="/my-donations"              element={<MyDonations />} />
-        <Route path="/admin/project/:id/update"  element={<AdminUpdatePage />} />
-        <Route path="/admin/projects"            element={<AdminProjectsPage />} />
-        <Route path="/admin/projects/:id"        element={<AdminProjectUpdatePage />} />
-        <Route path="/notifications"             element={<NotificationsPage />} />
-        <Route path="/admin/users"               element={<AdminUsersPage />} />
-        <Route path="/admin/categories"          element={<AdminCategoriesPage />} />
-        <Route path="/admin/users/:id/edit"      element={<AdminEditUserPage />} />
-        <Route path="/about"                     element={<AboutPage />} />
-        <Route path="/contact"                   element={<ContactPage />} />
-        <Route path="/feedback"                  element={<FeedbackPage />} />
-        <Route path="/verify-otp"                element={<VerifyOtpPage />} />
-        <Route path="/profile"                   element={<ProfilePage />} />
-        <Route path="/success-stories"           element={<SuccessStoriesPage />} />
+        {/* ── Public ── */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/feedback" element={<FeedbackPage />} />
+        <Route path="/success-stories" element={<SuccessStoriesPage />} />
+        <Route path="/category/:id" element={<CategoryPage />} />
+        <Route path="/project/:id" element={<ProjectPage />} />
+
+        {/* ── Auth ── */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-otp" element={<VerifyOtpPage />} />
+
+        {/* ── User ── */}
+        <Route path="/my-donations" element={<MyDonations />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+
+        {/* ── Admin ── */}
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/projects" element={<AdminProjectsPage />} />
+        <Route path="/admin/projects/:id" element={<AdminProjectUpdatePage />} />
+        <Route path="/admin/projects/:id/update" element={<AdminUpdatePage />} />
+        <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/users/:id/edit" element={<AdminEditUserPage />} />
       </Routes>
 
       {showFooter && <Footer />}

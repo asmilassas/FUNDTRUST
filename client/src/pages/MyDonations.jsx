@@ -18,30 +18,116 @@ function MyDonations() {
   }, []);
 
   return (
-    <div style={{ padding: "40px" }}>
-      <h2>My Donations</h2>
+    <>
+      <style>{styles}</style>
 
-      {donations.length === 0 ? (
-        <p>No donations yet.</p>
-      ) : (
-        donations.map((donation) => (
-          <div
-            key={donation._id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "15px",
-              marginBottom: "15px",
-              borderRadius: "8px",
-            }}
-          >
-            <p><strong>Project:</strong> {donation.charity.name}</p>
-            <p><strong>Amount:</strong> ${donation.amount}</p>
-            <p><strong>Status:</strong> {donation.status}</p>
-          </div>
-        ))
-      )}
-    </div>
+      <div className="donations-page">
+        <div className="donations-container">
+          <h2 className="donations-title">My Donations</h2>
+
+          {donations.length === 0 ? (
+            <p className="empty-text">You haven't donated yet.</p>
+          ) : (
+            <div className="donations-grid">
+              {donations.map((donation) => (
+                <div key={donation._id} className="donation-card">
+                  <h3 className="project-name">{donation.charity.name}</h3>
+
+                  <div className="donation-info">
+                    <p>
+                      <span>Amount</span>
+                      <strong>${donation.amount}</strong>
+                    </p>
+
+                    <p>
+                      <span>Status</span>
+                      <strong className="status">{donation.status}</strong>
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
+
+const styles = `
+.donations-page{
+  background:#fdf8f0;
+  min-height:100vh;
+  padding:80px 20px;
+  font-family:'DM Sans', sans-serif;
+}
+
+.donations-container{
+  max-width:1000px;
+  margin:auto;
+}
+
+.donations-title{
+  font-family:'Cormorant Garamond', serif;
+  font-size:40px;
+  text-align:center;
+  color:#0f1f3d;
+  margin-bottom:50px;
+}
+
+.donations-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
+}
+
+.donation-card{
+  background:#fffef9;
+  border:1px solid rgba(15,31,61,0.08);
+  border-radius:14px;
+  padding:24px;
+  transition:all .2s ease;
+  box-shadow:0 4px 20px rgba(15,31,61,0.05);
+}
+
+.donation-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 40px rgba(15,31,61,0.12);
+  border-color:rgba(201,150,58,0.4);
+}
+
+.project-name{
+  font-family:'Cormorant Garamond', serif;
+  font-size:22px;
+  color:#0f1f3d;
+  margin-bottom:18px;
+}
+
+.donation-info p{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:10px;
+  font-size:14px;
+}
+
+.donation-info span{
+  color:#6b7a99;
+}
+
+.donation-info strong{
+  color:#0f1f3d;
+}
+
+.status{
+  color:#c9963a;
+  font-weight:600;
+}
+
+.empty-text{
+  text-align:center;
+  color:#6b7a99;
+  font-size:16px;
+}
+`;
 
 export default MyDonations;
