@@ -25,6 +25,8 @@ app.use(
 app.use(express.json());
 app.use(morgan('dev'));
 
+app.use("/uploads", express.static("uploads"));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -33,12 +35,11 @@ app.use('/api/charities', charityRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/feedback', feedbackRoutes);
 
-// Health route
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
   });
 });
 

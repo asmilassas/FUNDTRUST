@@ -18,10 +18,10 @@ const { protect, admin } = require("../middlewares/authMiddleware");
 */
 
 // Get logged-in user profile
-router.get("/me", protect, getProfile);
+router.get("/profile", protect, getProfile);
 
 // Update profile
-router.patch("/me", protect, updateProfile);
+router.patch("/profile", protect, updateProfile);
 
 // Update preferences
 router.patch("/preferences", protect, updatePreferences);

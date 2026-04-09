@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import React, { useState, useEffect } from "react";
 
 function Navbar() {
-  const [user, setUser] = useState(null);
+  const { user, setUser, logout, loading } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,12 +19,9 @@ function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
-    navigate("/", { replace: true });
-  };
-
+  logout();
+  navigate("/");
+};
   const getInitials = (name) => {
     if (!name) return "U";
     return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
