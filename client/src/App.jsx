@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import AdminRoute from "./components/AdminRoute";
 import Home from "./pages/Home";
 import CategoryPage from "./pages/CategoryPage";
 import ProjectPage from "./pages/ProjectPage";
@@ -24,6 +25,10 @@ function App() {
   return (
     <>
       <Navbar />
+       {/* Tailwind Test */}
+      <h1 className="text-3xl font-bold text-blue-600">
+        Tailwind Working
+      </h1>
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -31,15 +36,15 @@ function App() {
         <Route path="/project/:id" element={<ProjectPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="/my-donations" element={<MyDonations />} />
-        <Route path="/admin/project/:id/update" element={<AdminUpdatePage />} />
-        <Route path="/admin/projects" element={<AdminProjectsPage />} />
-        <Route path="/admin/projects/:id" element={<AdminProjectUpdatePage />} />
+        <Route path="/admin/project/:id/update" element={<AdminRoute><AdminUpdatePage /></AdminRoute>} />
+        <Route path="/admin/projects" element={<AdminRoute><AdminProjectsPage /></AdminRoute>} />
+        <Route path="/admin/projects/:id" element={<AdminRoute><AdminProjectUpdatePage /></AdminRoute>} />
         <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/admin/users" element={<AdminUsersPage />} />
-        <Route path="/admin/categories" element={<AdminCategoriesPage />} />
-        <Route path="/admin/users/:id/edit" element={<AdminEditUserPage />} />
+        <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
+        <Route path="/admin/categories" element={<AdminRoute><AdminCategoriesPage /></AdminRoute>} />
+        <Route path="/admin/users/:id/edit" element={<AdminRoute><AdminEditUserPage /></AdminRoute>} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/feedback" element={<FeedbackPage />} />

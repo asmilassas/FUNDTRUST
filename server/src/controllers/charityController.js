@@ -3,7 +3,7 @@ const Charity = require("../models/Charity");
 // Get All
 const getCharities = async (req, res) => {
   try {
-    const { category } = req.query;
+    const { category, page = 1, limit = 10, search = "" } = req.query;
 
     let filter = {};
 
@@ -11,10 +11,23 @@ const getCharities = async (req, res) => {
       filter.category = category;
     }
 
-    const charities = await Charity.find(filter)
-      .populate("category", "name");
+    // search by title
+    filter.title = { $regex: search, $options: "i" };
 
-    res.json({ charities });
+    const charities = await Charity.find(filter)
+      .populate("category", "name")
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    const total = await Charity.countDocuments(filter);
+
+    res.json({
+      charities,
+      currentPage: Number(page),
+      totalPages: Math.ceil(total / limit),
+      totalCharities: total,
+    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to fetch charities" });

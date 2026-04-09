@@ -21,11 +21,24 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get("/categories")
-      .then((res) => setCategories(res.data.categories))
-      .catch((err) => console.error("Error:", err))
-      .finally(() => setLoading(false));
-  }, []);
+  api.get("/categories")
+    .then((res) => {
+      console.log("API response:", res.data);
+
+      if (Array.isArray(res.data)) {
+        setCategories(res.data);
+      } else if (Array.isArray(res.data.categories)) {
+        setCategories(res.data.categories);
+      } else {
+        setCategories([]);
+      }
+    })
+    .catch((err) => {
+      console.error("Error:", err);
+      setCategories([]);
+    })
+    .finally(() => setLoading(false));
+}, []);
 
   return (
     <>

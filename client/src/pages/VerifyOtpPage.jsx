@@ -1,43 +1,49 @@
 import { useState } from "react";
-import api from "../services/api";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
-function VerifyOtpPage() {
-  const [email, setEmail] = useState("");
+function VerifyOTP() {
   const [otp, setOtp] = useState("");
   const navigate = useNavigate();
 
-  const handleVerify = async () => {
-    try {
-      await api.post("/auth/verify-otp", { email, otp });
-      alert("Account verified successfully!");
-      navigate("/login");
-    } catch (error) {
-      alert(error.response?.data?.message || "Verification failed");
-    }
-  };
+  const email = localStorage.getItem("verifyEmail");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+  try{
+    await api.post("/auth/verify-otp", {
+      email,
+      otp
+    });
+
+    localStorage.removeItem("verifyEmail");
+
+    navigate("/login");
+  } catch (err) {
+    alert("Invalid OTP");
+  }
+};
 
   return (
-    <div style={{ padding: "50px" }}>
-      <h2>Verify Your Account</h2>
+    <div>
+      <h2>Enter OTP</h2>
 
-      <input
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Enter OTP"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
+          required
+        />
 
-      <input
-        placeholder="Enter OTP"
-        value={otp}
-        onChange={(e) => setOtp(e.target.value)}
-      />
-
-      <button onClick={handleVerify}>
-        Verify
-      </button>
+        <button type="submit">
+          Verify
+        </button>
+      </form>
     </div>
   );
 }
 
-export default VerifyOtpPage;
+export default VerifyOTP;
