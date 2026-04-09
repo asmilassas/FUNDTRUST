@@ -40,7 +40,7 @@ const updateProfile = async (req, res) => {
         });
       }
 
-      user.password = newPassword; //auto hashed by pre-save
+      user.password = newPassword; // auto hashed by pre-save
     }
 
     await user.save();
@@ -89,7 +89,7 @@ const updatePreferences = async (req, res) => {
   ADMIN FUNCTIONS
 */
 
-// Get All Users (Admin Only)
+//  Get All Users (Admin Only)
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
@@ -101,7 +101,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-//Delete User (Admin Only)
+//  Delete User (Admin Only)
 const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);

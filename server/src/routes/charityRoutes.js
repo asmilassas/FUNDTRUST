@@ -4,7 +4,8 @@ const { getCharities, getCharity, createCharity, updateCharity, deleteCharity, a
 const { protect, admin } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
 
-// Public
+
+// Public Routes
 router.get("/", getCharities);
 
 // /admin/all MUST be before /:id to avoid Express treating "admin" as an id

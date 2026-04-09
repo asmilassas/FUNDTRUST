@@ -56,4 +56,5 @@ const charitySchema = new mongoose.Schema(
   }
 );
 
+
 module.exports = mongoose.model('Charity', charitySchema);

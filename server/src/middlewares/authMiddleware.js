@@ -1,10 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-/* ===============================
-   PROTECT MIDDLEWARE
-================================= */
-
+//Protect Middleware
 const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -31,10 +28,7 @@ const protect = async (req, res, next) => {
   }
 };
 
-/* ===============================
-   ADMIN MIDDLEWARE
-================================= */
-
+//Admin Middleware
 const admin = (req, res, next) => {
   if (!req.user || !req.user.isAdmin) {
     return res.status(403).json({ message: "Admin access required" });
@@ -42,10 +36,6 @@ const admin = (req, res, next) => {
 
   next();
 };
-
-/* ===============================
-   EXPORT
-================================= */
 
 module.exports = {
   protect,

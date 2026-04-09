@@ -13,7 +13,7 @@ const {
 
 const { protect, admin } = require("../middlewares/authMiddleware");
 
-/*
+/* 
   USER ROUTES (Protected)
 */
 
@@ -40,7 +40,7 @@ router.get("/notifications", protect, async (req, res) => {
   }
 });
 
-/* 
+/*
   ADMIN ROUTES
 */
 

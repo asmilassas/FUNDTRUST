@@ -9,9 +9,11 @@ const donationSchema = new mongoose.Schema(
 
   paymentMethod: {
     type: String,
-    enum: ["stripe"],
+    enum: ["stripe", "bank"],
     default: "stripe",
   },
+
+  receiptImage: { type: String },
 
   frequency: {
     type: String,
@@ -20,10 +22,14 @@ const donationSchema = new mongoose.Schema(
   },
 
   status: {
-    type: String,
-    enum: ["pending", "succeeded", "failed"],
-    default: "pending",
-  },
+  type: String,
+  enum: ["pending", "succeeded", "failed", "rejected"],
+  default: "pending",
+},
+
+  rejectionReason: {
+  type: String,
+},
 
   stripePaymentIntentId: { type: String },
   stripeSubscriptionId: { type: String },
