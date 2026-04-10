@@ -19,7 +19,6 @@ const generateReceipt = ({ donation, user, charity }) => {
     donation: {
       amount: donation.amount,
       currency: donation.currency,
-      frequency: donation.frequency,
       status: donation.status,
       stripePaymentIntentId: donation.stripePaymentIntentId,
       stripeSubscriptionId: donation.stripeSubscriptionId,

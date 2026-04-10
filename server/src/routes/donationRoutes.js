@@ -1,44 +1,38 @@
 const express = require("express");
-const router = express.Router();
+const { protect } = require("../middlewares/authMiddleware");
 
+// Controllers
 const {
-  createOneTimeDonation,
-  createRecurringDonation,
+  createDonation,
+  confirmDonation,
   listUserDonations,
   listTransparencySummary,
-  acknowledgeDonation,
-  approveDonation,
-  rejectDonation,
-  getPendingDonations,
+  getPlatformStats,
+  getDonationReceipt,
+  getCharityDonations,
 } = require("../controllers/donationController");
 
-const { protect, admin } = require("../middlewares/authMiddleware");
-const upload = require("../middlewares/uploadMiddleware");
+const router = express.Router();
 
-// Transparency summary
+// Platform stats (home page)
+router.get("/stats", getPlatformStats);
+
+// Transparency breakdown (public leaderboard)
 router.get("/transparency", listTransparencySummary);
 
-// Protected User Routes
-// One-time donation (supports bank receipt upload)
-router.post("/one-time", protect, upload.single("receiptImage"), createOneTimeDonation);
+// All donations for a specific charity (public view)
+router.get("/charity/:charityId", getCharityDonations);
 
-// Recurring donation
-router.post("/recurring", protect, createRecurringDonation);
+// Create donation and Stripe PaymentIntent
+router.post("/", protect, createDonation);
 
-// Get logged-in user's donations
+// Confirm Stripe payment
+router.post("/:id/confirm", protect, confirmDonation);
+
+// Logged-in user's donations
 router.get("/me", protect, listUserDonations);
 
-// View donation receipt
-router.get("/:id/receipt", protect, acknowledgeDonation);
-
-//Admin Routes
-// Get all pending bank donations
-router.get("/admin/pending", protect, admin, getPendingDonations);
-
-// Approve donation
-router.put("/:id/approve", protect, admin, approveDonation);
-
-// Reject donation
-router.put("/:id/reject", protect, admin, rejectDonation);
+// Single receipt (owner only)
+router.get("/:id/receipt", protect, getDonationReceipt);
 
 module.exports = router;

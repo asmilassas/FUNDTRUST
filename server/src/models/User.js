@@ -1,20 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const preferenceSchema = new mongoose.Schema(
-  {
-    newslettersOptIn: { type: Boolean, default: true },
-    impactAlertsOptIn: { type: Boolean, default: true },
-    defaultDonationAmount: { type: Number },
-    defaultDonationFrequency: {
-      type: String,
-      enum: ['one-time', 'monthly', 'quarterly', 'annually'],
-      default: 'one-time',
-    },
-  },
-  { _id: false }
-);
-
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -22,9 +8,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, minlength: 6 },
     avatarUrl: { type: String },
     isAdmin: { type: Boolean, default: false },
-    preferences: { type: preferenceSchema, default: () => ({}) },
 
-    //OTP Fields
     isVerified: {
       type: Boolean,
       default: false,
@@ -35,15 +19,6 @@ const userSchema = new mongoose.Schema(
     otpExpires: {
       type: Date,
     },
-
-    //Notifications
-    notifications: [
-      {
-        message: { type: String },
-        read: { type: Boolean, default: false },
-        createdAt: { type: Date, default: Date.now }
-      }
-    ],
   },
   {
     timestamps: true,

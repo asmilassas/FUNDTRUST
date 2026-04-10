@@ -1,32 +1,39 @@
 const express = require("express");
-const router = express.Router();
-const { getCharities, getCharity, createCharity, updateCharity, deleteCharity, addProjectUpdate } = require("../controllers/charityController");
 const { protect, admin } = require("../middlewares/authMiddleware");
 const upload = require("../middlewares/uploadMiddleware");
 
+// Import controller functions
+const {
+  getCharities,
+  getCharity,
+  createCharity,
+  updateCharity,
+  deleteCharity,
+  addProjectUpdate,
+  getAllCharitiesAdmin
+} = require("../controllers/charityController");
 
-// Public Routes
+const router = express.Router();
+
+// GET /api/charities - Public list with filters, pagination, search
 router.get("/", getCharities);
 
-// /admin/all MUST be before /:id to avoid Express treating "admin" as an id
-router.get("/admin/all", protect, admin, async (req, res) => {
-  try {
-    const Charity = require("../models/Charity");
-    const charities = await Charity.find().populate("category", "name").sort({ createdAt: -1 });
-    res.json({ charities });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch projects" });
-  }
-});
+// GET /api/charities/admin/all - Admin
+router.get("/admin/all", protect, admin, getAllCharitiesAdmin);
 
+// GET /api/charities/:id
 router.get("/:id", getCharity);
 
-// Admin — support optional single cover image upload on create/update
+// POST /api/charities - Create charity (admin only)
 router.post("/", protect, admin, upload.single("coverImage"), createCharity);
+
+// PATCH /api/charities/:id - Update charity (admin only)
 router.patch("/:id", protect, admin, upload.single("coverImage"), updateCharity);
+
+// DELETE /api/charities/:id - Delete charity (admin only)
 router.delete("/:id", protect, admin, deleteCharity);
 
-// Transparency update with multiple images
+// POST /api/charities/:id/update - Add project update (admin only)
 router.post("/:id/update", protect, admin, upload.array("images", 5), addProjectUpdate);
 
 module.exports = router;

@@ -1,59 +1,34 @@
 const express = require("express");
-const router = express.Router();
+const { protect, admin } = require("../middlewares/authMiddleware");
 
 const {
   getProfile,
   updateProfile,
-  updatePreferences,
   getAllUsers,
   deleteUser,
   createUserByAdmin,
-  updateUserByAdmin,
+  toggleAdmin,
 } = require("../controllers/userController");
 
-const { protect, admin } = require("../middlewares/authMiddleware");
+const router = express.Router();
 
-/* 
-  USER ROUTES (Protected)
-*/
-
-// Get logged-in user profile
+// GET logged-in user profile
 router.get("/profile", protect, getProfile);
+router.get("/me", protect, getProfile);
 
-// Update profile
-router.patch("/profile", protect, updateProfile);
+// Update profile (name/password)
+router.patch("/me", protect, updateProfile);
 
-// Update preferences
-router.patch("/preferences", protect, updatePreferences);
-
-// Get notifications
-router.get("/notifications", protect, async (req, res) => {
-  try {
-    const User = require("../models/User");
-
-    const user = await User.findById(req.user._id)
-      .select("notifications");
-
-    res.json({ notifications: user.notifications || [] });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch notifications" });
-  }
-});
-
-/*
-  ADMIN ROUTES
-*/
-
-// Get all users
+// Get all users (admin only)
 router.get("/admin/all", protect, admin, getAllUsers);
 
-// Delete user
+// Delete user (admin only)
 router.delete("/admin/:id", protect, admin, deleteUser);
 
-//Add user
+// Create user (admin only)
 router.post("/admin/create", protect, admin, createUserByAdmin);
 
-//update user
-router.put("/admin/:id", protect, admin, updateUserByAdmin);
+// Toggle admin role (admin only)
+router.patch("/admin/:id/toggle-admin", protect, admin, toggleAdmin);
 
 module.exports = router;
