@@ -1,114 +1,177 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import AdminLayout from "../components/AdminLayout";
+import { fundingProgress } from "../utils";
+
+const IMG_BASE = "http://localhost:5000/uploads/";
+
+const STATUS_CLS = {
+  completed: "bg-green-100 text-green-800",
+  "in-progress": "bg-blue-100 text-blue-800",
+};
 
 function AdminProjectUpdatePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [fund, setFund] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("started");
   const [images, setImages] = useState([]);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  useEffect(() => { fetchFund(); }, [id]);
 
+  const fetchFund = async () => {
     try {
-      const formData = new FormData();
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("status", status);
-
-      for (let i = 0; i < images.length; i++) {
-        formData.append("images", images[i]);
-      }
-
-      await api.post(`/charities/${id}/update`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
-
-      setMessage("Project update added successfully!");
-      setTitle("");
-      setDescription("");
-      setImages([]);
-
-    } catch (error) {
-      console.error(error);
-      setMessage("Failed to add update.");
+      const res = await api.get(`/charities/${id}`);
+      setFund(res.data.charity);
+    } catch {
+      navigate("/admin/projects");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!title || !description) { setMessage("error:Title and description are required."); return; }
+    setSaving(true);
+    setMessage("");
+    try {
+      const fd = new FormData();
+      fd.append("title", title);
+      fd.append("description", description);
+      fd.append("status", status);
+      for (let i = 0; i < images.length; i++) fd.append("images", images[i]);
+      await api.post(`/charities/${id}/update`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+      setMessage("success");
+      setTitle(""); setDescription(""); setImages([]);
+      fetchFund();
+    } catch (err) {
+      setMessage("error:" + (err.response?.data?.message || "Failed to post update."));
+    } finally { setSaving(false); }
+  };
+
+  if (loading) return <AdminLayout><p className="text-brand-brown">Loading…</p></AdminLayout>;
+  if (!fund) return null;
+
+  const goal = fund.goals?.[0];
+  const pct = fundingProgress(goal?.amountRaised || 0, goal?.targetAmount || 0);
+
   return (
-    <div style={{ padding: "40px", maxWidth: "800px", margin: "auto" }}>
-      <h1>Add Project Update</h1>
+    <AdminLayout>
+      <div className="max-w-3xl">
 
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Update Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-          style={{ width: "100%", marginBottom: "15px", padding: "8px" }}
-        />
-
-        <textarea
-          placeholder="Update Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-          style={{ width: "100%", marginBottom: "15px", padding: "8px" }}
-        />
-
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          style={{ width: "100%", marginBottom: "15px", padding: "8px" }}
-        >
-          <option value="started">Started</option>
-          <option value="in-progress">In Progress</option>
-          <option value="completed">Completed</option>
-        </select>
-
-        <input
-          type="file"
-          multiple
-          onChange={(e) => setImages(e.target.files)}
-          style={{ marginBottom: "15px" }}
-        />
-
-        <button
-          type="submit"
-          style={{
-            padding: "10px 20px",
-            background: "green",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer"
-          }}
-        >
-          Add Update
+        {/* Back */}
+        <button onClick={() => navigate("/admin/projects")}
+          className="bg-transparent border-none text-brand-orange font-semibold cursor-pointer text-sm mb-5 p-0">
+          ← Back to Funds
         </button>
-      </form>
 
-      {message && <p style={{ marginTop: "20px" }}>{message}</p>}
+        {/* Fund summary card */}
+        <div className="bg-white rounded-2xl px-6 py-5 border border-gray-100 mb-7">
+          <div className="flex justify-between items-start gap-4 mb-4">
+            <div>
+              <h1 className="font-serif text-xl font-bold text-brand-dark mb-1">{fund.name}</h1>
+              <p className="text-sm text-brand-brown leading-relaxed">{fund.mission}</p>
+            </div>
+            <button onClick={() => navigate(`/project/${id}`)}
+              className="px-4 py-2 bg-brand-warm text-brand-orange border border-orange-200/50 rounded-lg text-xs font-semibold cursor-pointer shrink-0">
+              View Live →
+            </button>
+          </div>
+          {goal && (
+            <>
+              <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+                <span>LKR {goal.amountRaised.toLocaleString()} raised of LKR {goal.targetAmount.toLocaleString()}</span>
+                <span>{pct.toFixed(1)}%</span>
+              </div>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-brand-orange to-brand-amber rounded-full"
+                  style={{ width: `${pct}%` }} />
+              </div>
+            </>
+          )}
+        </div>
 
-      <button
-        onClick={() => navigate("/admin/projects")}
-        style={{
-          marginTop: "30px",
-          padding: "8px 15px",
-          background: "#2c7be5",
-          color: "white",
-          border: "none",
-          borderRadius: "6px"
-        }}
-      >
-        Back to Projects
-      </button>
-    </div>
+        <div className="grid grid-cols-2 gap-6 items-start">
+
+          {/* Post update form */}
+          <div>
+            <h2 className="font-serif text-lg font-bold text-brand-dark mb-4">Post Update</h2>
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-5 border border-gray-100">
+              <label className="form-label">Update Title *</label>
+              <input value={title} onChange={e => setTitle(e.target.value)}
+                placeholder="e.g. Phase 1 complete" className="form-input mb-3.5" />
+
+              <label className="form-label">Description *</label>
+              <textarea value={description} onChange={e => setDescription(e.target.value)}
+                placeholder="Describe what was accomplished…" rows={4}
+                className="form-input mb-3.5 resize-y" />
+
+              <label className="form-label">Status</label>
+              <select value={status} onChange={e => setStatus(e.target.value)} className="form-input mb-3.5">
+                <option value="started">Started</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+
+              <label className="form-label">Images (optional)</label>
+              <input type="file" multiple accept="image/*" onChange={e => setImages(e.target.files)}
+                className="block mb-4 text-sm text-gray-700" />
+
+              {message === "success" && <div className="alert-success mb-3">✅ Posted successfully!</div>}
+              {message.startsWith("error:") && <div className="alert-error mb-3">❌ {message.replace("error:", "")}</div>}
+
+              <button type="submit" disabled={saving}
+                className={`btn-orange w-full py-3 ${saving ? "opacity-70 cursor-not-allowed" : ""}`}>
+                {saving ? "Posting…" : "Post Update"}
+              </button>
+            </form>
+          </div>
+
+          {/* Posted updates */}
+          <div>
+            <h2 className="font-serif text-lg font-bold text-brand-dark mb-4">
+              Posted Updates ({fund.transparencyUpdates?.length || 0})
+            </h2>
+            {!fund.transparencyUpdates?.length ? (
+              <div className="bg-white rounded-2xl p-7 border border-gray-100 text-center text-gray-400 text-sm">
+                No updates yet. Post your first one!
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {[...fund.transparencyUpdates].reverse().map(u => (
+                  <div key={u._id} className="bg-white rounded-2xl p-4 border border-gray-100">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-bold text-brand-dark text-sm">{u.title}</span>
+                      <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 ml-2 ${STATUS_CLS[u.status] || "bg-gray-100 text-gray-700"}`}>
+                        {u.status}
+                      </span>
+                    </div>
+                    <p className="text-[12.5px] text-brand-brown leading-relaxed mb-2">{u.description}</p>
+                    {u.images?.length > 0 && (
+                      <div className="flex gap-1.5 flex-wrap mb-2">
+                        {u.images.map((img, i) => (
+                          <img key={i} src={`${IMG_BASE}${img}`} alt={`Update image ${i + 1}`}
+                            className="w-16 h-12 object-cover rounded-lg" />
+                        ))}
+                      </div>
+                    )}
+                    <div className="text-[11px] text-gray-400">{new Date(u.publishedAt).toLocaleDateString()}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
   );
 }
 

@@ -1,64 +1,86 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import { getInitials } from "../utils";
+
+const NAV = [
+  { to: "/admin/dashboard", label: "Dashboard", icon: "📊" },
+  { to: "/admin/projects", label: "Funds", icon: "📁" },
+  { to: "/admin/categories", label: "Categories", icon: "📂" },
+  { to: "/admin/users", label: "Users", icon: "👥" },
+  { to: "/admin/feedback", label: "Reviews", icon: "📝" },
+];
 
 function AdminLayout({ children }) {
+  const { pathname } = useLocation();
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const isActive = (to) => pathname === to || pathname.startsWith(to + "/");
+
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      
-      {/* Sidebar */}
-      <div
-        style={{
-          width: "250px",
-          background: "#1f2937",
-          color: "white",
-          padding: "30px 20px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "20px",
-          position: "fixed",
-          height: "100vh",
-        }}
-      >
-        <h2 style={{ marginBottom: "30px" }}>Admin Panel</h2>
+    <div className="flex min-h-screen bg-gray-50 font-sans">
+      <aside className="fixed top-0 left-0 w-60 h-screen bg-brand-warm border-r border-orange-100/60 flex flex-col pb-6 z-50 overflow-y-auto">
 
-        <Link style={linkStyle} to="/admin/dashboard">
-          📊 Dashboard
-        </Link>
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 px-5 py-6 border-b border-orange-100/50">
+          <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-orange to-brand-amber flex items-center justify-center text-sm">❤️</span>
+          <div>
+            <div className="font-serif font-bold text-brand-dark text-base leading-tight">FundTrust</div>
+            <div className="text-[10px] text-brand-tan uppercase tracking-widest">Admin Panel</div>
+          </div>
+        </div>
 
-        <Link style={linkStyle} to="/admin/projects">
-          📁 Manage Projects
-        </Link>
+        {/* User */}
+        {user && (
+          <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-orange-100/40 mb-2">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-orange to-brand-amber flex items-center justify-center text-xs font-bold text-white shrink-0">
+              {getInitials(user.name)}
+            </div>
+            <div className="overflow-hidden">
+              <div className="text-sm font-semibold text-brand-dark truncate">{user.name}</div>
+              <div className="text-[11px] text-brand-tan">Administrator</div>
+            </div>
+          </div>
+        )}
 
-        <Link style={linkStyle} to="/admin/users">
-          👥 Manage Users
-        </Link>
+        {/* Nav */}
+        <nav className="flex-1 px-3">
+          {NAV.map(({ to, label, icon }) => {
+            const active = isActive(to);
+            return (
+              <Link key={to} to={to} className={[
+                "flex items-center gap-2.5 px-3 py-2.5 rounded-xl mb-0.5 text-sm transition-all no-underline",
+                "border-l-[3px]",
+                active
+                  ? "bg-orange-50 text-brand-burn font-bold border-brand-orange"
+                  : "text-brand-brown font-medium border-transparent hover:bg-orange-50/50",
+              ].join(" ")}>
+                <span className="text-base">{icon}</span>
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
 
-        <Link style={linkStyle} to="/admin/categories">
-          📂 Manage Sections
-        </Link>
-      </div>
+        {/* Footer */}
+        <div className="px-3 flex flex-col gap-1.5">
+          <Link to="/" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-brand-tan text-sm font-medium no-underline hover:bg-orange-50/50 transition-colors">
+            <span>🌐</span> Visit Site
+          </Link>
+          <button
+            onClick={() => { logout(); navigate("/"); }}
+            className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium cursor-pointer w-full text-left font-sans">
+            <span>🚪</span> Log Out
+          </button>
+        </div>
+      </aside>
 
-      {/* Main Content */}
-      <div
-        style={{
-          marginLeft: "250px",
-          flex: 1,
-          padding: "40px",
-          background: "#f3f4f6",
-        }}
-      >
+      <main className="ml-60 flex-1 p-9 pb-16 min-h-screen">
         {children}
-      </div>
+      </main>
     </div>
   );
 }
-
-const linkStyle = {
-  display: "block",
-  color: "white",
-  textDecoration: "none",
-  padding: "10px",
-  borderRadius: "6px",
-  background: "#374151",
-};
 
 export default AdminLayout;
