@@ -15,28 +15,30 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-
     const token = localStorage.getItem("token");
 
     if (token) {
       api.get("/users/profile")
         .then(res => {
-          setUser(res.data);
-          localStorage.setItem("user", JSON.stringify(res.data));
+          const userData = res.data.user || res.data;
+          setUser(userData);
+          localStorage.setItem("user", JSON.stringify(userData));
         })
-        .catch(() => logout());
+        .catch(() => logout())
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-
   }, []);
 
   const login = async (token) => {
-
     localStorage.setItem("token", token);
 
     const res = await api.get("/users/profile");
 
-    setUser(res.data);
-    localStorage.setItem("user", JSON.stringify(res.data));
+    const userData = res.data.user || res.data;
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
   };
 
   return (

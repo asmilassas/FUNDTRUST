@@ -1,223 +1,142 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";   // 🔥 added
+import { useEffect, useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
+import { AuthContext } from "../context/AuthContext";
 
 function AdminUsersPage() {
-  const [users, setUsers] = useState([]);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const navigate = useNavigate();   // 🔥 added
+  const [users, setUsers]  = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", password: "", isAdmin: false });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [toggling, setToggling] = useState(null);
+  const { user: currentUser } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const u = JSON.parse(localStorage.getItem("user"));
+    if (!u?.isAdmin) { navigate("/"); return; }
     fetchUsers();
-  }, []);
+  }, [navigate]);
 
-  const fetchUsers = async () => {
-    const res = await api.get("/users/admin/all");
-    setUsers(res.data.users || []);
+  const fetchUsers = () => api.get("/users/admin/all").then(r => setUsers(r.data.users || [])).catch(console.error);
+
+  const handleCreate = async () => {
+    setError("");
+    if (!form.name || !form.email || !form.password) { setError("All fields are required"); return; }
+    setSaving(true);
+    try {
+      await api.post("/users/admin/create", form);
+      setForm({ name: "", email: "", password: "", isAdmin: false }); setShowForm(false); fetchUsers();
+    } catch (err) { setError(err.response?.data?.message || "Create failed"); }
+    finally { setSaving(false); }
   };
 
-  const createUser = async () => {
-    if (!name || !email || !password) {
-      alert("All fields required");
-      return;
-    }
-
-    await api.post("/users/admin/create", {
-      name,
-      email,
-      password,
-      isAdmin,
-    });
-
-    setName("");
-    setEmail("");
-    setPassword("");
-    setIsAdmin(false);
-    fetchUsers();
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+    try { await api.delete(`/users/admin/${id}`); fetchUsers(); }
+    catch (err) { alert(err.response?.data?.message || "Delete failed"); }
   };
 
-  const deleteUser = async (id) => {
-    if (!window.confirm("Delete this user?")) return;
-    await api.delete(`/users/admin/${id}`);
-    fetchUsers();
+  const handleToggleAdmin = async (u) => {
+    const action = u.isAdmin ? "remove admin rights from" : "make";
+    const suffix = u.isAdmin ? "" : " an admin";
+    if (!window.confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ${u.name}${suffix}?`)) return;
+    setToggling(u._id);
+    try { await api.patch(`/users/admin/${u._id}/toggle-admin`); fetchUsers(); }
+    catch (err) { alert(err.response?.data?.message || "Failed to update role"); }
+    finally { setToggling(null); }
   };
 
-  const normalUsers = users.filter((u) => !u.isAdmin);
-  const adminUsers = users.filter((u) => u.isAdmin);
+  const filtered = users.filter(u =>
+    u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
+  );
+  const normals = filtered.filter(u => !u.isAdmin);
+  const admins  = filtered.filter(u => u.isAdmin);
+
+  const inputCls = "w-full px-3 py-2.5 border-[1.5px] border-gray-200 rounded-[9px] text-sm outline-none font-sans box-border";
 
   return (
     <AdminLayout>
-      <h1 style={{ marginBottom: "30px" }}>👥 Manage Users</h1>
-
-      {/* Create User Form */}
-      <div style={cardStyle}>
-        <h3>Create New User</h3>
-
-        <input
-          style={inputStyle}
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-
-        <input
-          style={inputStyle}
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          style={inputStyle}
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <label>
-          <input
-            type="checkbox"
-            checked={isAdmin}
-            onChange={(e) => setIsAdmin(e.target.checked)}
-          />
-          {" "}Make Admin
-        </label>
-
-        <button style={createBtn} onClick={createUser}>
-          Create User
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="font-serif text-[26px] font-bold text-brand-dark">👥 Manage Users</h1>
+        <button onClick={() => setShowForm(s => !s)}
+          className="px-5 py-2.5 bg-gradient-to-br from-brand-orange to-brand-burn text-white font-bold rounded-xl cursor-pointer font-sans text-sm">
+          {showForm ? "Cancel" : "+ Add User"}
         </button>
       </div>
 
-      {/* Two Column Layout */}
-      <div style={{ display: "flex", gap: "20px", marginTop: "40px" }}>
-        
-        {/* Normal Users */}
-        <div style={{ flex: 1 }}>
-          <h2>👤 Users</h2>
-          {normalUsers.map((user) => (
-            <div key={user._id} style={userCard}>
-              <div>
-                {user.name} <br />
-                <small>{user.email}</small>
+      {showForm && (
+        <div className="bg-white rounded-[18px] p-6 mb-6 shadow-panel border border-brand-orange/10">
+          <h3 className="font-serif font-bold text-brand-dark mb-4 text-lg">Create New User</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {[["name","Full Name","text"],["email","Email","text"],["password","Password","password"]].map(([k,label,type]) => (
+              <div key={k}>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">{label}</label>
+                <input type={type} value={form[k]} onChange={e => setForm(f => ({...f,[k]:e.target.value}))} className={inputCls} />
               </div>
-              <div>
-                {/* 🔥 UPDATED EDIT BUTTON */}
-                <button
-                  style={editBtn}
-                  onClick={() =>
-                    navigate(`/admin/users/${user._id}/edit`)
-                  }
-                >
-                  Edit
-                </button>
-
-                <button
-                  style={deleteBtn}
-                  onClick={() => deleteUser(user._id)}
-                >
-                  Delete
-                </button>
-              </div>
+            ))}
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="isAdmin" checked={form.isAdmin} onChange={e => setForm(f => ({...f,isAdmin:e.target.checked}))} />
+              <label htmlFor="isAdmin" className="text-sm text-gray-700 cursor-pointer">Make Admin</label>
             </div>
-          ))}
+          </div>
+          {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg mt-2">{error}</p>}
+          <button onClick={handleCreate} disabled={saving}
+            className="mt-4 px-5 py-2.5 bg-gradient-to-br from-brand-orange to-brand-burn text-white font-bold rounded-xl cursor-pointer disabled:opacity-60 font-sans text-sm">
+            {saving ? "Creating…" : "Create User"}
+          </button>
         </div>
+      )}
 
-        {/* Admin Users */}
-        <div style={{ flex: 1 }}>
-          <h2>🛡 Admins</h2>
-          {adminUsers.map((user) => (
-            <div key={user._id} style={userCard}>
-              <div>
-                {user.name} <br />
-                <small>{user.email}</small>
-              </div>
-              <div>
-                {/* 🔥 UPDATED EDIT BUTTON */}
-                <button
-                  style={editBtn}
-                  onClick={() =>
-                    navigate(`/admin/users/${user._id}/edit`)
-                  }
-                >
-                  Edit
-                </button>
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or email…"
+        className="px-4 py-2.5 border-[1.5px] border-gray-200 rounded-full text-sm w-full max-w-[340px] outline-none mb-6 font-sans block" />
 
-                <button
-                  style={deleteBtn}
-                  onClick={() => deleteUser(user._id)}
-                >
-                  Delete
-                </button>
+      <div className="grid grid-cols-2 gap-6">
+        {[[" 👤 Regular Users", normals, true],["🛡 Administrators", admins, false]].map(([title, list, canDelete]) => (
+          <div key={title}>
+            <h2 className="font-serif text-[17px] font-bold text-brand-dark mb-3.5">{title} ({list.length})</h2>
+            {list.length === 0 ? <p className="text-gray-400 text-sm">None found.</p> : list.map(u => (
+              <div key={u._id} className="bg-white rounded-[14px] p-4 mb-2.5 shadow-card flex justify-between items-center gap-2">
+                <div>
+                  <div className="font-semibold text-brand-dark text-sm">
+                    {u.name}
+                    {currentUser?._id === u._id && (
+                      <span className="ml-2 text-[10px] bg-brand-warm text-brand-orange border border-brand-orange/25 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider">You</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-400">{u.email}</div>
+                  {canDelete && <div className={`text-[11px] font-semibold mt-0.5 ${u.isVerified ? "text-emerald-600" : "text-brand-orange"}`}>{u.isVerified ? "✓ Verified" : "⚠ Unverified"}</div>}
+                </div>
+                <div className="flex gap-1.5">
+                  {canDelete && (
+                    <button onClick={() => handleToggleAdmin(u)} disabled={toggling === u._id}
+                      className="px-2.5 py-1.5 bg-blue-50 text-blue-700 rounded-lg font-semibold cursor-pointer text-xs font-sans whitespace-nowrap">
+                      {toggling === u._id ? "…" : "Make Admin"}
+                    </button>
+                  )}
+                  {!canDelete && currentUser?._id !== u._id && (
+                    <button onClick={() => handleToggleAdmin(u)} disabled={toggling === u._id}
+                      className="px-2.5 py-1.5 bg-amber-50 text-amber-800 rounded-lg font-semibold cursor-pointer text-xs font-sans whitespace-nowrap">
+                      {toggling === u._id ? "…" : "Remove Admin"}
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button onClick={() => handleDelete(u._id, u.name)}
+                      className="px-2.5 py-1.5 bg-red-50 text-red-600 rounded-lg font-semibold cursor-pointer text-xs font-sans">
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ))}
       </div>
     </AdminLayout>
   );
 }
-
-/* Styles */
-
-const cardStyle = {
-  background: "white",
-  padding: "20px",
-  borderRadius: "10px",
-  boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
-  maxWidth: "500px",
-};
-
-const inputStyle = {
-  display: "block",
-  width: "100%",
-  padding: "8px",
-  marginBottom: "10px",
-  borderRadius: "6px",
-  border: "1px solid #ddd",
-};
-
-const createBtn = {
-  padding: "8px 15px",
-  background: "#2c7be5",
-  color: "white",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
-
-const editBtn = {
-  background: "#2c7be5",
-  color: "white",
-  border: "none",
-  padding: "6px 10px",
-  borderRadius: "6px",
-  cursor: "pointer",
-  marginRight: "8px",
-};
-
-const deleteBtn = {
-  background: "#e63757",
-  color: "white",
-  border: "none",
-  padding: "6px 10px",
-  borderRadius: "6px",
-  cursor: "pointer",
-};
-
-const userCard = {
-  background: "white",
-  padding: "15px",
-  marginBottom: "10px",
-  borderRadius: "8px",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
-};
 
 export default AdminUsersPage;
