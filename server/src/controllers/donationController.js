@@ -1,558 +1,200 @@
-const mongoose = require('mongoose');
-const Charity = require('../models/Charity');
-const Donation = require('../models/Donation');
-const { generateReceipt } = require('../utils/receipt');
+const mongoose = require("mongoose");
+const Charity  = require("../models/Charity");
+const Donation = require("../models/Donation");
+const User     = require("../models/User");
 const sendEmail = require("../utils/emailService");
 
-let stripeClient = null;
-try {
-  if (process.env.STRIPE_SECRET_KEY) {
-    const stripe = require('stripe');
-    stripeClient = stripe(process.env.STRIPE_SECRET_KEY);
-  }
-} catch (error) {
-  console.warn('Stripe SDK is not available. Ensure dependencies are installed.', error.message);
+// Load Stripe only if the key is configured 
+let stripe = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 }
 
-const stripeReady = Boolean(stripeClient);
-
-const ensureCharityExists = async (charityId) => {
-  if (!mongoose.Types.ObjectId.isValid(charityId)) {
-    throw new Error('Invalid charity id');
-  }
-
+const getCharity = async (charityId) => {
+  if (!mongoose.Types.ObjectId.isValid(charityId)) throw new Error("Invalid charity id");
   const charity = await Charity.findById(charityId);
-  if (!charity) {
-    const error = new Error('Charity not found');
-    error.status = 404;
-    throw error;
-  }
-
+  if (!charity) throw new Error("Charity not found");
   return charity;
 };
 
-const createDonationRecord = async ({ user, charity, payload }) => {
-  const donation = new Donation({
-    user: user._id,
-    charity: charity._id,
-    amount: payload.amount,
-    currency: payload.currency || 'usd',
-    frequency: payload.frequency,
-    impactNote: payload.impactNote,
-    metadata: payload.metadata,
-  });
-  await donation.save();
-  return donation;
-};
-
-const createOneTimeDonation = async (req, res) => {
+// POST /donations
+// Creates a Stripe PaymentIntent and records the donation.
+const createDonation = async (req, res) => {
   try {
-    if (req.user.isAdmin) {
-        return res.status(403).json({
-       message: "Admins are not allowed to make donations",
-        });
+    // Admins are not allowed to donate
+    if (req.user.isAdmin) return res.status(403).json({ message: "Admins cannot donate" });
+    if (!stripe) return res.status(500).json({ message: "Payment provider not configured" });
+
+    const { charityId, amount, message = "", anonymous = false } = req.body;
+
+    if (!charityId || !amount) return res.status(400).json({ message: "charityId and amount are required" });
+    if (Number(amount) < 1) return res.status(400).json({ message: "Minimum donation is LKR 1" });
+
+    const charity = await getCharity(charityId);
+
+    // Enforce funding cap so a fund cannot be over-funded
+    const goal = charity.goals?.[0];
+    if (goal) {
+      const remaining = goal.targetAmount - goal.amountRaised;
+      if (remaining <= 0) return res.status(400).json({ message: "This fund is fully funded" });
+      if (Number(amount) > remaining) return res.status(400).json({ message: `Maximum donation is LKR ${remaining.toLocaleString()}` });
     }
 
-    const {
-      charityId,
-      amount,
-      currency = "usd",
-      metadata = {},
-      impactNote,
-      paymentMethod = "stripe",
-    } = req.body;
-
-    if (!charityId || !amount) {
-      return res.status(400).json({
-        message: "charityId and amount are required",
-      });
-    }
-
-    const charity = await ensureCharityExists(charityId);
-    //  Prevent Overfunding
-const goal = charity.goals?.[0];
-
-if (goal) {
-  const remainingAmount = goal.targetAmount - goal.amountRaised;
-
-  if (remainingAmount <= 0) {
-    return res.status(400).json({
-      message: "This project is already fully funded.",
-    });
-  }
-
-  if (Number(amount) > remainingAmount) {
-    return res.status(400).json({
-      message: `Only $${remainingAmount} remaining to complete this project.`,
-    });
-  }
-}
-
-    //Bank Transfer Logic
-    if (paymentMethod === "bank") {
-      if (!req.file) {
-        return res.status(400).json({
-          message: "Receipt image is required for bank transfer",
-        });
-      }
-
-      const donation = new Donation({
-        user: req.user._id,
-        charity: charity._id,
-        amount,
-        currency,
-        paymentMethod: "bank",
-        receiptImage: req.file.filename,
-        status: "pending",
-      });
-
-      await donation.save();
-
-      return res.status(201).json({
-        message: "Bank donation submitted. Awaiting admin approval.",
-        donation,
-      });
-    }
-
-    //Stripe (Simulation Mode)
-    const donation = await createDonationRecord({
-      user: req.user,
-      charity,
-      payload: {
-        amount,
-        currency,
-        frequency: "one-time",
-        impactNote,
-        metadata,
-      },
+    // Create a Stripe PaymentIntent 
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(Number(amount) * 100),
+      currency: "usd", // Stripe requires a valid currency code, amount is displayed as LKR in the UI
+      description: `Donation to ${charity.name}`,
+      metadata: { charityId: charity._id.toString(), userId: req.user._id.toString() },
     });
 
-    donation.paymentMethod = "stripe";
-
-    if (!stripeReady) {
-  donation.status = "succeeded";
-  await donation.save();
-
-  const charity = await Charity.findById(charity._id);
-  if (charity && charity.goals && charity.goals.length > 0) {
-    charity.goals[0].amountRaised += donation.amount;
-    await charity.save();
-  }
-
-  return res.status(201).json({
-    message: "Donation successful (Simulated)",
-    donation,
-  });
-}
-
-//Real stripe payment
-const paymentIntent = await stripeClient.paymentIntents.create({
-  amount: Math.round(amount * 100),
-  currency,
-  description: `Donation to ${charity.name}`,
-  metadata: {
-    donationId: donation._id.toString(),
-    charityId: charity._id.toString(),
-  },
-  receipt_email: req.user.email,
-});
-
-//Mark donation as successful
-donation.status = "succeeded";
-donation.paymentMethod = "stripe";
-donation.stripePaymentIntentId = paymentIntent.id;
-
-await donation.save();
-
-//Update charity goal
-if (charity.goals && charity.goals.length > 0) {
-  charity.goals[0].amountRaised += Number(amount);
-  await charity.save();
-}
-
-//Send success email
-await sendEmail(
-  req.user.email,
-  "Donation Successful - FundTrust",
-  `Hi ${req.user.name},
-
-  Thank you for your donation of $${amount} to "${charity.name}".
-
-  Your support makes a real difference 
-
-  FundTrust Team`
-);
-
-return res.status(201).json({
-  message: "Donation successful",
-  donation,
-});
-
-  } catch (error) {
-    console.error("Create one-time donation error", error);
-    return res.status(500).json({
-      message: error.message || "Unable to create donation",
+    // Record the donation in DB with status pending until payment is confirmed
+    const donation = new Donation({
+      user: req.user._id,
+      charity: charity._id,
+      amount: Number(amount),
+      status: "pending",
+      stripePaymentIntentId: paymentIntent.id,
+      message: message.trim(),
+      anonymous,
     });
-  }
-};
-
-const frequencyMap = {
-  monthly: { interval: 'month', intervalCount: 1 },
-  quarterly: { interval: 'month', intervalCount: 3 },
-  annually: { interval: 'year', intervalCount: 1 },
-};
-
-const createRecurringDonation = async (req, res) => {
-  try {
-    const { charityId, amount, frequency = 'monthly', currency = 'usd', metadata = {} } = req.body;
-
-    if (!charityId || !amount) {
-      return res.status(400).json({ message: 'charityId and amount are required' });
-    }
-
-    if (!frequencyMap[frequency]) {
-      return res.status(400).json({ message: 'Unsupported frequency' });
-    }
-
-    const charity = await ensureCharityExists(charityId);
-
-    const donation = await createDonationRecord({
-      user: req.user,
-      charity,
-      payload: {
-        amount,
-        currency,
-        frequency,
-        metadata,
-      },
-    });
-
-    if (!stripeReady) {
-      donation.status = 'pending';
-      donation.metadata = {
-        ...donation.metadata,
-        simulated: true,
-        note: 'Stripe secret not configured. Recurring payment pending manual setup.',
-      };
-      await donation.save();
-      return res.status(201).json({
-        donation,
-        stripe: { configured: false },
-      });
-    }
-
-    const interval = frequencyMap[frequency];
-
-    const session = await stripeClient.checkout.sessions.create({
-      mode: 'subscription',
-      customer_email: req.user.email,
-      line_items: [
-        {
-          price_data: {
-            currency,
-            unit_amount: Math.round(amount * 100),
-            product_data: {
-              name: `Recurring donation to ${charity.name}`,
-              metadata: {
-                charityId: charity._id.toString(),
-              },
-            },
-            recurring: {
-              interval: interval.interval,
-              interval_count: interval.intervalCount,
-            },
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        donationId: donation._id.toString(),
-        charityId: charity._id.toString(),
-        donationType: 'recurring',
-      },
-      success_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/donations/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/donations/cancel`,
-    });
-
-    donation.metadata = {
-      ...donation.metadata,
-      checkoutSessionId: session.id,
-      checkoutUrl: session.url,
-    };
     await donation.save();
 
+    // Return the clientSecret so the frontend can confirm the payment with Stripe.js
     return res.status(201).json({
-      donation,
-      stripe: {
-        configured: true,
-        checkoutUrl: session.url,
-        sessionId: session.id,
-      },
+      clientSecret: paymentIntent.client_secret,
+      donationId: donation._id,
     });
-  } catch (error) {
-    console.error('Create recurring donation error', error);
-    const status = error.status || 500;
-    return res.status(status).json({ message: error.message || 'Unable to create recurring donation' });
+  } catch (err) {
+    console.error("createDonation error:", err);
+    return res.status(500).json({ message: err.message || "Donation failed" });
   }
 };
 
+// POST /donations/:id/confirm
+// Called after Stripe payment is confirmed on the client side.
+const confirmDonation = async (req, res) => {
+  try {
+    const { paymentIntentId } = req.body;
+    const donation = await Donation.findById(req.params.id).populate("charity", "name goals");
+    if (!donation) return res.status(404).json({ message: "Donation not found" });
+    if (donation.user.toString() !== req.user._id.toString()) return res.status(403).json({ message: "Not authorized" });
+
+    // Verify payment status with Stripe
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (pi.status !== "succeeded") return res.status(400).json({ message: "Payment not yet confirmed" });
+
+    // Mark donation as succeeded
+    donation.status = "succeeded";
+    donation.cardLast4 = pi.payment_method ? (await stripe.paymentMethods.retrieve(pi.payment_method))?.card?.last4 : null;
+    await donation.save();
+
+    // Update the charity's raised amount and donor count
+    const charity = await Charity.findById(donation.charity._id);
+    if (charity?.goals?.[0]) charity.goals[0].amountRaised += donation.amount;
+    const alreadyDonated = await Donation.exists({ charity: donation.charity._id, user: req.user._id, status: "succeeded", _id: { $ne: donation._id } });
+    if (!alreadyDonated) charity.donorCount = (charity.donorCount || 0) + 1;
+    await charity.save();
+
+    // Send a confirmation email (non-blocking)
+    sendEmail(req.user.email, `Donation Confirmed – ${charity.name}`,
+      `Hi ${req.user.name},\n\nThank you for your LKR ${donation.amount.toLocaleString()} donation to "${charity.name}"!\n\nFundTrust Team`
+    ).catch(e => console.warn("Email failed:", e.message));
+
+    const populated = await Donation.findById(donation._id).populate("charity", "name mission");
+    return res.json({ message: "Donation confirmed", donation: populated });
+  } catch (err) {
+    console.error("confirmDonation error:", err);
+    return res.status(500).json({ message: err.message || "Confirmation failed" });
+  }
+};
+
+// GET /donations/me — list the user's successful donations 
 const listUserDonations = async (req, res) => {
   try {
-    const donations = await Donation.find({ user: req.user._id })
-      .populate('charity', 'name mission coverImage')
+    const donations = await Donation.find({ user: req.user._id, status: "succeeded" })
+      .populate("charity", "name mission coverImage")
       .sort({ createdAt: -1 });
-
     return res.json({ donations });
-  } catch (error) {
-    console.error('List user donations error', error);
-    return res.status(500).json({ message: 'Unable to fetch donations' });
+  } catch (err) {
+    return res.status(500).json({ message: "Unable to fetch donations" });
   }
 };
 
+// GET /donations/transparency — public breakdown per charity 
 const listTransparencySummary = async (req, res) => {
   try {
     const summary = await Donation.aggregate([
-      {
-        $group: {
-          _id: '$charity',
-          totalAmount: { $sum: '$amount' },
-          donationCount: { $sum: 1 },
-          recurringCount: {
-            $sum: {
-              $cond: [{ $ne: ['$frequency', 'one-time'] }, 1, 0],
-            },
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: 'charities',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'charity',
-        },
-      },
-      { $unwind: '$charity' },
-      {
-        $project: {
-          _id: 0,
-          charityId: '$charity._id',
-          charityName: '$charity.name',
-          mission: '$charity.mission',
-          totalAmount: 1,
-          donationCount: 1,
-          recurringCount: 1,
-          goals: '$charity.goals',
-          transparencyUpdates: '$charity.transparencyUpdates',
-        },
-      },
+      { $match: { status: "succeeded" } },
+      { $group: { _id: "$charity", totalAmount: { $sum: "$amount" }, donationCount: { $sum: 1 }, uniqueDonors: { $addToSet: "$user" } } },
+      { $lookup: { from: "charities", localField: "_id", foreignField: "_id", as: "charity" } },
+      { $unwind: "$charity" },
+      { $project: { _id: 0, charityId: "$charity._id", charityName: "$charity.name", mission: "$charity.mission", coverImage: "$charity.coverImage", totalAmount: 1, donationCount: 1, donorCount: { $size: "$uniqueDonors" }, goals: "$charity.goals", transparencyUpdates: "$charity.transparencyUpdates" } },
       { $sort: { totalAmount: -1 } },
     ]);
-
     return res.json({ summary });
-  } catch (error) {
-    console.error('Transparency summary error', error);
-    return res.status(500).json({ message: 'Unable to build transparency summary' });
+  } catch (err) {
+    return res.status(500).json({ message: "Unable to build transparency summary" });
   }
 };
 
-const acknowledgeDonation = async (req, res) => {
+// GET /donations/stats — numbers from all charities for the home page hero 
+const getPlatformStats = async (req, res) => {
   try {
-    const donation = await Donation.findById(req.params.id).populate('charity').populate('user', '-password');
-
-    if (!donation) {
-      return res.status(404).json({ message: 'Donation not found' });
-    }
-
-    if (!req.user.isAdmin && donation.user._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to view this receipt' });
-    }
-
-    const receipt = generateReceipt({ donation, user: donation.user, charity: donation.charity });
-
-    return res.json({ donation, receipt });
-  } catch (error) {
-    console.error('Acknowledge donation error', error);
-    return res.status(500).json({ message: 'Unable to fetch donation receipt' });
+    const [agg] = await Donation.aggregate([
+      { $match: { status: "succeeded" } },
+      { $group: { _id: null, totalRaised: { $sum: "$amount" }, totalDonations: { $sum: 1 }, uniqueDonors: { $addToSet: "$user" } } },
+    ]);
+    const totalFunds = await Charity.countDocuments();
+    return res.json({
+      totalRaised: agg?.totalRaised || 0,
+      totalDonors: agg?.uniqueDonors?.length || 0,
+      totalDonations: agg?.totalDonations || 0,
+      totalFunds,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Unable to fetch stats" });
   }
 };
 
-const approveDonation = async (req, res) => {
+// GET /donations/:id/receipt — fetch a single donation receipt (user only)
+const getDonationReceipt = async (req, res) => {
   try {
     const donation = await Donation.findById(req.params.id)
-      .populate("user")
-      .populate("charity");
-
-    if (!donation) {
-      return res.status(404).json({ message: "Donation not found" });
-    }
-
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-
-    if (donation.status === "succeeded") {
-      return res.json({ message: "Donation already approved" });
-    }
-
-    const charity = donation.charity;
-
-    if (!charity || !charity.goals || charity.goals.length === 0) {
-      return res.status(400).json({ message: "Project goal not found" });
-    }
-
-    const goal = charity.goals[0];
-    const remainingAmount = goal.targetAmount - goal.amountRaised;
-
-    if (remainingAmount <= 0) {
-      return res.status(400).json({
-        message: "Project already fully funded",
-      });
-    }
-
-    if (donation.amount > remainingAmount) {
-      return res.status(400).json({
-        message: `Only $${remainingAmount} remaining. Donation exceeds limit.`,
-      });
-    }
-
-    //Approve
-    donation.status = "succeeded";
-    await donation.save();
-
-    const previousAmount = goal.amountRaised;
-    goal.amountRaised += donation.amount;
-    await charity.save();
-
-    //Send Approval Email
-    await sendEmail(
-      donation.user.email,
-      "Donation Approved - FundTrust",
-      `Hi ${donation.user.name},
-
-      Great news!
-
-      Your donation of $${donation.amount} to "${charity.name}" has been approved successfully.
-
-      Thank you for supporting FundTrust
-
-      FundTrust Team`
-    );
-
-    // If project just reached full funding
-    if (
-      previousAmount < goal.targetAmount &&
-      goal.amountRaised >= goal.targetAmount
-    ) {
-      const donors = await Donation.find({
-        charity: charity._id,
-        status: "succeeded",
-      }).populate("user");
-
-      const User = require("../models/User");
-
-      for (const d of donors) {
-        await User.findByIdAndUpdate(d.user._id, {
-          $push: {
-            notifications: {
-              message: `The project "${charity.name}" has been fully funded! Thank you for your support.`,
-            },
-          },
-        });
-      }
-    }
-
-    res.json({
-      message: "Donation approved and project updated successfully",
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Approval failed" });
+      .populate("charity", "name mission")
+      .populate("user", "name email");
+    if (!donation) return res.status(404).json({ message: "Donation not found" });
+    if (donation.user._id.toString() !== req.user._id.toString()) return res.status(403).json({ message: "Not authorized" });
+    return res.json({ donation });
+  } catch (err) {
+    return res.status(500).json({ message: "Unable to fetch receipt" });
   }
 };
 
-const getPendingDonations = async (req, res) => {
+// GET /donations/charity/:charityId
+// Returns all successful donations for a specific fund.
+const getCharityDonations = async (req, res) => {
   try {
     const donations = await Donation.find({
-      paymentMethod: "bank",
-      status: "pending",   //Must be pending only
+      charity: req.params.charityId,
+      status: "succeeded",
     })
-      .populate("user", "name email")
-      .populate("charity", "name");
+      .populate("user", "name")  // only fetch name
+      .sort({ createdAt: -1 });
 
-    res.json({ donations });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to fetch pending donations" });
+    // Hide donor name for anonymous donations
+    const sanitised = donations.map(d => ({
+      _id: d._id,
+      amount: d.amount,
+      createdAt: d.createdAt,
+      donor: d.anonymous ? "Anonymous" : (d.user?.name || "Anonymous"),
+    }));
+
+    return res.json({ donations: sanitised });
+  } catch (err) {
+    console.error("getCharityDonations error:", err);
+    return res.status(500).json({ message: "Unable to fetch donations" });
   }
 };
 
-const rejectDonation = async (req, res) => {
-  try {
-    const { reason } = req.body;
-
-    const donation = await Donation.findById(req.params.id)
-      .populate("user")
-      .populate("charity");
-
-    if (!donation) {
-      return res.status(404).json({ message: "Donation not found" });
-    }
-
-    if (donation.status !== "pending") {
-      return res.status(400).json({
-        message: "Only pending donations can be rejected",
-      });
-    }
-
-    donation.status = "rejected";
-    donation.rejectionReason = reason || "Rejected by admin";
-
-    await donation.save();
-
-    //Send Rejection Email
-    await sendEmail(
-      donation.user.email,
-      "Donation Rejected - FundTrust",
-      `Hi ${donation.user.name},
-
-      Unfortunately your donation of $${donation.amount} to "${donation.charity.name}" was rejected.
-
-      Reason: ${donation.rejectionReason}
-
-      If this was a mistake, please contact support.
-
-      FundTrust Team`
-    );
-
-    // Add notification
-    const User = require("../models/User");
-
-    await User.findByIdAndUpdate(donation.user._id, {
-      $push: {
-        notifications: {
-          message: `Your donation was rejected. Reason: ${donation.rejectionReason}`,
-          createdAt: new Date(),
-        },
-      },
-    });
-
-    res.json({ message: "Donation rejected successfully" });
-
-  } catch (error) {
-    console.error("Reject error:", error);
-    res.status(500).json({ message: "Rejection failed" });
-  }
-};
-
-module.exports = {
-  createOneTimeDonation,
-  createRecurringDonation,
-  listUserDonations,
-  listTransparencySummary,
-  acknowledgeDonation,
-  approveDonation,
-  getPendingDonations,
-  rejectDonation
-};
+module.exports = { createDonation, confirmDonation, listUserDonations, listTransparencySummary, getPlatformStats, getDonationReceipt, getCharityDonations };
