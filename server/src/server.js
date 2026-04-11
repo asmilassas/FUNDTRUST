@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://fundtrust-laecoffas-abhishek200376s-projects.vercel.app"
+    "https://fundtrust.vercel.app/"
   ],
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
