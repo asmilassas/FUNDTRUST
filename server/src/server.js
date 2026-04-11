@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const cors       = require("cors");
+const cors = require("cors");
 
 // Routes
 const authRoutes = require("./routes/authRoutes");
@@ -16,7 +16,10 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [
+    "http://localhost:5173",
+    "https://fundtrust.vercel.app/"
+  ],
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
