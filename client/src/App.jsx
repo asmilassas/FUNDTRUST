@@ -10,7 +10,6 @@ import AboutPage from "./pages/AboutPage";
 import FeedbackPage from "./pages/FeedbackPage";
 import TransparencyPage from "./pages/TransparencyPage";
 import SearchPage from "./pages/SearchPage";
-import NotFoundPage from "./pages/NotFoundPage";
 
 // Auth pages
 import Login from "./pages/Login";
@@ -63,9 +62,6 @@ export default function App() {
         <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
         <Route path="/admin/categories" element={<AdminRoute><AdminCategoriesPage /></AdminRoute>} />
         <Route path="/admin/feedback" element={<AdminRoute><AdminFeedbackPage /></AdminRoute>} />
-
-        {/* 404 catch-all */}
-        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
   );
