@@ -1,310 +1,217 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useContext } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
-import React, { useState, useEffect } from "react";
+import { getInitials } from "../utils";
 
 function Navbar() {
-  const { user, setUser, logout, loading } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  useEffect(() => {
-    const updateUser = () => {
-      const storedUser = localStorage.getItem("user");
-      setUser(storedUser ? JSON.parse(storedUser) : null);
-    };
+  const close = () => setMobileOpen(false);
+  const handleLogout = () => { logout(); navigate("/"); close(); };
+  const isActive = (path) => pathname === path || pathname.startsWith(path + "/");
 
-    updateUser();
-    window.addEventListener("storage", updateUser);
-    return () => window.removeEventListener("storage", updateUser);
-  }, []);
-
-  const handleLogout = () => {
-  logout();
-  navigate("/");
-};
-  const getInitials = (name) => {
-    if (!name) return "U";
-    return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
-  };
+  // Tailwind classes for nav links — active state handled via className instead of inline object
+  const linkCls = (path) => [
+    "ft-nav-link",
+    isActive(path) ? "ft-nav-link-active" : "",
+  ].filter(Boolean).join(" ");
 
   return (
     <>
-      <style>{styles}</style>
-      <nav className="navbar">
-
-        {/* Logo */}
-        <Link to="/" className="navbar-logo">
-          <span className="navbar-logo-icon">❤️</span>
+      <style>{css}</style>
+      <nav className="ft-nav">
+        <Link to="/" className="ft-logo" onClick={close}>
+          <span className="ft-logo-icon">❤️</span>
           FundTrust
         </Link>
 
-        <div className="navbar-links">
-          {!user ? (
+        <div className="ft-links">
+          <Link to="/transparency" className={linkCls("/transparency")}>Transparency</Link>
+          <Link to="/about" className={linkCls("/about")}>About</Link>
+          <Link to="/feedback" className={linkCls("/feedback")}>Reviews</Link>
+
+          <div className="ft-divider" />
+
+          {!user && (
             <>
-              <Link to="/about"    className="nav-link">About</Link>
-              <Link to="/contact"  className="nav-link">Contact</Link>
-              <Link to="/feedback" className="nav-link">Feedback</Link>
-              <div className="nav-divider" />
-              <Link to="/login"    className="btn-ghost">Log in</Link>
-              <Link to="/register" className="btn-primary">Get Started</Link>
+              <Link to="/login" className="ft-ghost">Log in</Link>
+              <Link to="/register" className="ft-primary">Get Started</Link>
             </>
-          ) : (
+          )}
+
+          {user && !user.isAdmin && (
             <>
-              {/* User Badge */}
-              <div
-                 className="user-badge"
-                 style={{ cursor: "pointer" }}
-                 onClick={() => navigate("/profile")}
-                 title="Go to Profile"
->
-             <div className="user-avatar">{getInitials(user.name)}</div>
-                  {user.name}
-                  {user.isAdmin && <span className="admin-badge">Admin</span>}
-             </div>
-
-              <div className="nav-divider" />
-
-              {/* Normal user links */}
-              {!user.isAdmin && (
-                <>
-                  <Link to="/feedback"     className="nav-link">Feedback</Link>
-                  <Link to="/my-donations" className="btn-ghost">My Donations</Link>
-                </>
-              )}
-
-              {/* Admin */}
-              {user.isAdmin && (
-                <Link to="/admin/dashboard" className="btn-primary">
-                  Dashboard
-                </Link>
-              )}
-
-              {/* Notifications for normal users */}
-              {!user.isAdmin && (
-                <button
-                  className="btn-icon"
-                  onClick={() => navigate("/notifications")}
-                  title="Notifications"
-                >
-                  🔔
-                </button>
-              )}
-
-              {/* Logout */}
-              <button className="btn-danger" onClick={handleLogout}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                Logout
+              <Link to="/" className={linkCls("/active-funds")}>Active Funds</Link>
+              <Link to="/my-donations" className={linkCls("/my-donations")}>My Donations</Link>
+              <button className="ft-avatar" onClick={() => navigate("/profile")} title="My Profile">
+                {getInitials(user.name)}
               </button>
+              <button className="ft-danger" onClick={handleLogout}>Logout</button>
+            </>
+          )}
+
+          {user?.isAdmin && (
+            <>
+              <button className="ft-avatar ft-avatar-admin" onClick={() => navigate("/profile")} title="My Profile">
+                {getInitials(user.name)}
+                <span className="ft-admin-dot" />
+              </button>
+              <Link to="/admin/dashboard" className="ft-primary">Dashboard</Link>
+              <button className="ft-danger" onClick={handleLogout}>Logout</button>
             </>
           )}
         </div>
+
+        <button className="ft-ham" onClick={() => setMobileOpen(o => !o)} aria-label="Menu">
+          <span /><span /><span />
+        </button>
       </nav>
+
+      {mobileOpen && (
+        <div className="ft-overlay" onClick={close}>
+          <div className="ft-drawer" onClick={e => e.stopPropagation()}>
+            <Link to="/transparency" className="ft-mob-link" onClick={close}>Transparency</Link>
+            <Link to="/about" className="ft-mob-link" onClick={close}>About</Link>
+            <Link to="/feedback" className="ft-mob-link" onClick={close}>Reviews</Link>
+            <div className="ft-mob-sep" />
+            {!user && (
+              <>
+                <Link to="/login" className="ft-mob-link" onClick={close}>Log in</Link>
+                <Link to="/register" className="ft-mob-cta"  onClick={close}>Get Started</Link>
+              </>
+            )}
+            {user && !user.isAdmin && (
+              <>
+                <Link to="/"  className="ft-mob-link" onClick={close}>Active Funds</Link>
+                <Link to="/my-donations" className="ft-mob-link" onClick={close}>My Donations</Link>
+                <Link to="/profile" className="ft-mob-link" onClick={close}>My Profile</Link>
+              </>
+            )}
+            {user?.isAdmin && (
+              <>
+                <Link to="/admin/dashboard" className="ft-mob-cta"  onClick={close}>Dashboard</Link>
+                <Link to="/profile" className="ft-mob-link" onClick={close}>My Profile</Link>
+              </>
+            )}
+            {user && (
+              <button className="ft-mob-link ft-mob-logout" onClick={handleLogout}>Logout</button>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Lora:wght@700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
-  .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 48px;
-    height: 68px;
-    background: rgba(255, 247, 238, 0.92);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(234, 88, 12, 0.1);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+const css = `
+  .ft-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 40px; height: 64px;
+    background: rgba(255,247,238,0.97); backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(234,88,12,0.1);
+    position: sticky; top: 0; z-index: 1000;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    box-shadow: 0 2px 20px rgba(180, 80, 20, 0.07);
+    box-shadow: 0 1px 12px rgba(180,80,20,0.06);
+  }
+  .ft-logo {
+    font-family: 'Lora', serif; font-size: 20px; font-weight: 700;
+    color: #1c0f00; text-decoration: none;
+    display: flex; align-items: center; gap: 9px;
+    transition: opacity 0.2s; flex-shrink: 0;
+  }
+  .ft-logo:hover { opacity: 0.75; }
+  .ft-logo-icon {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg,#f97316,#fbbf24);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; box-shadow: 0 2px 8px rgba(249,115,22,0.3);
+  }
+  .ft-links { display: flex; align-items: center; gap: 4px; }
+  .ft-divider { width: 1px; height: 18px; background: rgba(234,88,12,0.15); margin: 0 6px; }
+
+  .ft-nav-link {
+    color: #78583a; text-decoration: none; font-size: 13.5px; font-weight: 500;
+    padding: 7px 12px; border-radius: 8px; background: transparent;
+    transition: all 0.18s; white-space: nowrap;
+  }
+  .ft-nav-link:hover { background: rgba(234,88,12,0.06); color: #c2410c; }
+  .ft-nav-link-active { color: #ea580c; font-weight: 700; background: rgba(234,88,12,0.07); }
+
+  .ft-ghost {
+    padding: 7px 16px; background: transparent; color: #78583a;
+    border: 1.5px solid rgba(234,88,12,0.22); border-radius: 8px;
+    font-size: 13.5px; font-weight: 600; cursor: pointer;
+    text-decoration: none; font-family: inherit; transition: all 0.18s; white-space: nowrap;
+  }
+  .ft-ghost:hover { background: rgba(234,88,12,0.06); border-color: rgba(234,88,12,0.38); color: #c2410c; }
+
+  .ft-primary {
+    padding: 8px 18px; background: linear-gradient(135deg,#f97316,#ea580c);
+    color: white; border: none; border-radius: 8px; font-size: 13.5px; font-weight: 700;
+    cursor: pointer; text-decoration: none; font-family: inherit;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 2px 12px rgba(249,115,22,0.28); white-space: nowrap;
+    display: inline-flex; align-items: center;
+  }
+  .ft-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(249,115,22,0.38); }
+
+  .ft-danger {
+    padding: 7px 14px; background: rgba(220,38,38,0.07); color: #b91c1c;
+    border: 1px solid rgba(220,38,38,0.18); border-radius: 8px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: inherit; transition: all 0.18s; white-space: nowrap;
+  }
+  .ft-danger:hover { background: rgba(220,38,38,0.12); }
+
+  .ft-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg,#f97316,#fbbf24);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: white;
+    cursor: pointer; position: relative; flex-shrink: 0;
+    border: none; transition: transform 0.15s;
+  }
+  .ft-avatar:hover { transform: scale(1.08); }
+  .ft-avatar-admin { background: linear-gradient(135deg,#8b5cf6,#6d28d9); }
+  .ft-admin-dot {
+    position: absolute; bottom: 0; right: 0;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #f97316; border: 2px solid white;
   }
 
-  .navbar-logo {
-    font-family: 'Lora', serif;
-    font-size: 21px;
-    font-weight: 700;
-    color: #1c0f00;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    transition: opacity 0.2s ease;
+  .ft-ham { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 6px; }
+  .ft-ham span { display: block; width: 22px; height: 2px; background: #78583a; border-radius: 2px; }
+
+  @media (max-width: 860px) {
+    .ft-nav { padding: 0 20px; }
+    .ft-links { display: none; }
+    .ft-ham { display: flex; }
   }
 
-  .navbar-logo:hover { opacity: 0.75; }
-
-  .navbar-logo-icon {
-    width: 30px; height: 30px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #f97316, #fbbf24);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    box-shadow: 0 2px 8px rgba(249,115,22,0.35);
-    flex-shrink: 0;
+  .ft-overlay { position: fixed; inset: 0; top: 64px; background: rgba(0,0,0,0.35); z-index: 999; }
+  .ft-drawer {
+    position: absolute; top: 0; right: 0; width: 260px; height: calc(100vh - 64px);
+    background: white; padding: 16px; display: flex; flex-direction: column; gap: 3px;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.1); overflow-y: auto;
   }
-
-  .navbar-links {
-    display: flex;
-    gap: 2px;
-    align-items: center;
+  .ft-mob-link {
+    display: block; padding: 11px 14px; border-radius: 10px; text-decoration: none;
+    color: #374151; font-size: 14px; font-weight: 500; font-family: 'Plus Jakarta Sans', sans-serif;
+    background: none; border: none; cursor: pointer; text-align: left; width: 100%;
+    transition: background 0.15s;
   }
-
-  .nav-link {
-    color: #78583a;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    padding: 7px 13px;
-    border-radius: 8px;
-    transition: color 0.2s ease, background 0.2s ease;
-  }
-
-  .nav-link:hover {
-    color: #1c0f00;
-    background: rgba(234,88,12,0.07);
-  }
-
-  .nav-divider {
-    width: 1px;
-    height: 20px;
-    background: rgba(234,88,12,0.15);
-    margin: 0 6px;
-  }
-
-  .btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    padding: 8px 16px;
-    background: transparent;
-    color: #78583a;
-    border: 1px solid rgba(234,88,12,0.2);
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
+  .ft-mob-link:hover { background: #f9fafb; }
+  .ft-mob-cta {
+    display: block; padding: 12px 14px; border-radius: 10px; margin-top: 6px;
+    background: linear-gradient(135deg,#f97316,#ea580c); color: white;
+    font-weight: 700; font-size: 14px; text-decoration: none; text-align: center;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.2s ease;
   }
-
-  .btn-ghost:hover {
-    background: rgba(234,88,12,0.06);
-    border-color: rgba(234,88,12,0.35);
-    color: #c2410c;
-  }
-
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 9px 20px;
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 700;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    cursor: pointer;
-    text-decoration: none;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    box-shadow: 0 2px 12px rgba(249,115,22,0.35);
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(249,115,22,0.45);
-  }
-
-  .btn-danger {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 15px;
-    background: rgba(220,38,38,0.07);
-    color: #b91c1c;
-    border: 1px solid rgba(220,38,38,0.18);
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .btn-danger:hover {
-    background: rgba(220,38,38,0.13);
-    border-color: rgba(220,38,38,0.32);
-  }
-
-  .btn-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px; height: 36px;
-    background: rgba(234,88,12,0.06);
-    border: 1px solid rgba(234,88,12,0.15);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
-    transition: all 0.2s ease;
-  }
-
-  .btn-icon:hover {
-    background: rgba(234,88,12,0.12);
-    border-color: rgba(234,88,12,0.28);
-    transform: translateY(-1px);
-  }
-
-  .user-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 12px 5px 7px;
-    background: rgba(234,88,12,0.06);
-    border: 1px solid rgba(234,88,12,0.14);
-    border-radius: 50px;
-    font-size: 13.5px;
-    font-weight: 500;
-    color: #4a2f12;
-  }
-
-  .user-avatar {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f97316, #fbbf24);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: white;
-    flex-shrink: 0;
-  }
-
-  .admin-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 7px;
-    background: rgba(234,88,12,0.1);
-    border: 1px solid rgba(234,88,12,0.2);
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 700;
-    color: #c2410c;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-  }
+  .ft-mob-logout { color: #dc2626; }
+  .ft-mob-sep { height: 1px; background: #f3f4f6; margin: 6px 0; }
 `;
 
 export default Navbar;
