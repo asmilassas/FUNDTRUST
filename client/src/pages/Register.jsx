@@ -411,3 +411,5 @@ const styles = `
 
 
 export default Register;
+
+Register.jsx
