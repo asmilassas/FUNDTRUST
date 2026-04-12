@@ -29,9 +29,6 @@ FundTrust connects donors with verified charities and provides visibility into h
 
 ### Donation System
 - One-time donations via Stripe PaymentIntent
-- Recurring donations via Stripe Checkout
-- Simulation mode when Stripe key is not configured
-- Donation receipts with impact notes
 - Donation history tracking per user
 
 ### Transparency & Impact Tracking
@@ -123,38 +120,12 @@ Backend runs at:
 ```
 http://localhost:5000/api
 ```
-
-##  API Endpoints Overview
-
-### Authentication
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-
-### Categories
-- `GET /api/categories` (Public)
-- `POST /api/categories` (Admin only)
-- `PUT /api/categories/:id` (Admin only)
-- `DELETE /api/categories/:id` (Admin only)
-
-### Charities
-- `GET /api/charities`
-- `POST /api/charities` (Admin only)
-
-### Donations
-- `POST /api/donations/one-time`
-- `POST /api/donations/recurring`
-- `GET /api/donations/transparency`
-- `GET /api/donations/me`
-
-
 ##  Stripe Integration
 
 FundTrust supports:
 
 - Secure payment processing via Stripe
 - One-time donations using PaymentIntent
-- Recurring donations via subscription Checkout
-- Simulation mode if Stripe secret key is not configured
 
 To enable live Stripe functionality, provide your test secret key in `.env`.
 
@@ -189,17 +160,112 @@ FundTrust demonstrates:
 
 It is designed as a full-stack MERN project suitable for university-level evaluation.
 
-##  Future Improvements
+## API Endpoints Overview
 
-- Stripe webhook integration
-- Admin dashboard UI
-- Category-level analytics visualization
-- Email receipt notifications
-- Docker containerization
-- Automated API and UI testing
+# Authentication
+- `POST /api/auth/register`
+- `POST /api/auth/verify-otp`
+- `POST /api/auth/login`
 
-##  Project Vision
+# Categories
+- `GET /api/categories` (Public)
+- `POST /api/categories` (Admin only)
+- `PATCH /api/categories/:id` (Admin only)
+- `DELETE /api/categories/:id` (Admin only)
 
-FundTrust aims to create a reliable and transparent digital ecosystem where donors can confidently contribute to social causes, knowing exactly how their funds are managed and utilized.
+# Charities
+- `GET /api/charities` (Public)
+- `GET /api/charities/admin/all` (Admin only)
+- `GET /api/charities/:id` (Public)
+- `POST /api/charities` (Admin only)
+- `PATCH /api/charities/:id` (Admin only)
+- `DELETE /api/charities/:id` (Admin only)
+- `POST /api/charities/:id/update` (Admin only)
+# Donations
+- `GET /api/donations/stats` (Public)
+- `GET /api/donations/transparency` (Public)
+- `GET /api/donations/charity/:charityId` (Public)
+- `POST /api/donations` (Authenticated)
+- `POST /api/donations/:id/confirm` (Authenticated)
+- `GET /api/donations/me` (Authenticated)
+- `GET /api/donations/:id/receipt` (Authenticated)
 
-**FundTrust — Building Trust Through Transparent Funding.**
+# Feedback
+- `GET /api/feedback/charity/:charityId` (Public)
+- `GET /api/feedback/all` (Public)
+- `GET /api/feedback/admin/all` (Admin only)
+- `POST /api/feedback/charity/:charityId` (Authenticated)
+- `DELETE /api/feedback/:id` (Authenticated)
+
+# Users
+- `GET /api/users/profile` (Authenticated)
+- `GET /api/users/me` (Authenticated)
+- `PATCH /api/users/me` (Authenticated)
+- `GET /api/users/admin/all` (Admin only)
+- `DELETE /api/users/admin/:id` (Admin only)
+- `POST /api/users/admin/create` (Admin only)
+- `PATCH /api/users/admin/:id/toggle-admin` (Admin only)
+
+# Health
+- `GET /api/health` (Public)
+
+## Integration Testing
+- Carried out using Postman
+
+## Performance Testing 
+- Carried out using Artillery
+
+# Setup
+# Install dependencies
+```bash
+cd server
+npm install --save-dev artillery dotenv-cli
+```
+
+# Structure
+server/
+artillery/
+load-test.yml
+quick-test.yml
+.env.test 
+
+## Deployment
+
+# Backend - Render
+# Setup
+- Push your code to GitHub
+- Go to Render 
+- Connect your GitHub repository
+- Configure the service :
+- Root Directory - `server`
+- Runtime - `Node`
+- Build Command - `npm install`
+- Start Command - `npm start`
+
+# env
+`MONGO_URI` - MongoDB Atlas connection string
+`JWT_SECRET`- Secret key for signing JWTs 
+`PORT` - Server port (Render sets this automatically) 
+`RESEND_API_KEY` - API key from resend.com for sending emails 
+`STRIPE_SECRET_KEY` - Stripe secret key from Stripe dashboard 
+`STRIPE_PUBLISHABLE_KEY` - Stripe publishable key 
+`STRIPE_WEBHOOK_SECRET` - Stripe webhook signing secret 
+`CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name for image uploads 
+`CLOUDINARY_API_KEY` - Cloudinary API key 
+`CLOUDINARY_API_SECRET` - Cloudinary API secret
+
+# Frontend - Vercel
+# Setup
+- Push your code to GitHub
+- Go to Verel 
+- Import your GitHub repository
+- Configure the service :
+- Root Directory - `client`
+- Node.js version - `24.x`
+- Build Command - `npm run build`
+- Output directory - `dist`
+- Install Command - `npm install`
+
+# env
+`VITE_API_URL` - URL of the deployed backend API
+`VITE_STRIPE_PUBLISHABLE_KEY` - Stripe Publishable Key

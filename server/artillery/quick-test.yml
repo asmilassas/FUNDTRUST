@@ -1,0 +1,19 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 10
+      arrivalRate: 2
+      name: "Quick sanity check"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Quick public check"
+    flow:
+      - get:
+          url: "/api/health"
+      - get:
+          url: "/api/charities"
+      - get:
+          url: "/api/donations/stats"
