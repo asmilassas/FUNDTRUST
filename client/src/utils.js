@@ -78,6 +78,15 @@ export function validateFundForm({ name, mission, category, targetAmount, deadli
   if (!category) return { valid: false, error: "Category is required." };
   if (!targetAmount || Number(targetAmount) < 1) return { valid: false, error: "A valid target amount is required." };
   if (!deadline) return { valid: false, error: "Deadline is required." };
+
+  // Deadline must be at least tomorrow
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const chosen = new Date(deadline);
+  if (chosen < tomorrow) return { valid: false, error: "Deadline must be at least tomorrow." };
+
   return { valid: true, error: "" };
 }
 
@@ -101,4 +110,13 @@ export function avgRating(feedbackList) {
   if (!feedbackList || feedbackList.length === 0) return null;
   const sum = feedbackList.reduce((acc, f) => acc + (f.rating || 0), 0);
   return (sum / feedbackList.length).toFixed(1);
+}
+
+export function getImageUrl(coverImage) {
+  if (!coverImage) return null;
+  // If it's already a full URL (Cloudinary), use it directly
+  if (coverImage.startsWith("http")) return coverImage;
+  // Legacy local filename - construct from API base
+  const base = import.meta.env.VITE_API_URL.replace("/api", "");
+  return `${base}/uploads/${coverImage}`;
 }

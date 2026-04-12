@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import api from "../services/api";
+import { getImageUrl } from "../utils";
 import { validateDonationAmount, fundingProgress, avgRating } from "../utils";
 import { AuthContext } from "../context/AuthContext";
 
@@ -20,8 +21,6 @@ const CARD_ELEMENT_OPTIONS = {
     invalid: { color: "#dc2626" },
   },
 };
-
-const IMG_BASE = "http://localhost:5000/uploads/";
 
 // Payment Modal 
 function PaymentModal({ project, onClose, onSuccess }) {
@@ -358,7 +357,7 @@ function ProjectPage() {
         {project.coverImage && (
           <div style={{ marginBottom: 28, borderRadius: 20, overflow: "hidden", maxHeight: 340 }}>
             <img
-              src={`${IMG_BASE}${project.coverImage}`}
+              src={getImageUrl(project.coverImage)}
               alt={project.name}
               style={{ width: "100%", height: 340, objectFit: "cover", display: "block" }}
             />
@@ -469,7 +468,7 @@ function ProjectPage() {
                   {u.images && u.images.length > 0 && (
                     <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
                       {u.images.map((img, i) => (
-                        <img key={i} src={`${IMG_BASE}${img}`} alt={`Update image ${i + 1}`}
+                        <img key={i} src={getImageUrl(img)} alt={`Update image ${i + 1}`}
                           style={{ width: 120, height: 80, objectFit: "cover", borderRadius: 10 }} />
                       ))}
                     </div>

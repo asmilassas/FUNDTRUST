@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { validateFundForm } from "../utils";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { getImageUrl } from "../utils";
 import AdminLayout from "../components/AdminLayout";
-
-const IMG_BASE = "http://localhost:5000/uploads/";
 
 function AdminProjectsPage() {
   const [funds, setFunds] = useState([]);
@@ -56,8 +55,8 @@ function AdminProjectsPage() {
       deadline: g.deadline ? g.deadline.slice(0, 10) : "",
     });
     setCoverImage(null);
-    setCoverPreview(fund.coverImage ? `${IMG_BASE}${fund.coverImage}` : "");
-    setEditingId(fund._id);
+    
+    setEditingId(fund._id);setCoverPreview(fund.coverImage ? getImageUrl(fund.coverImage) : "");
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -198,27 +197,73 @@ function AdminProjectsPage() {
                 type="date"
                 value={form.deadline}
                 onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
+                min={new Date(Date.now() + 86400000).toISOString().split("T")[0]} 
                 style={inp}
               />
             </div>
 
             {/* Cover Image */}
             <div>
-              <label style={lbl}>Cover Image <span style={opt}>(optional)</span></label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                style={{ display: "block", fontSize: 13, color: "#374151", marginBottom: 10 }}
+  <label style={lbl}>Cover Image <span style={opt}>(optional)</span></label>
+
+  {/* Hidden file input */}
+  <input
+    id="coverImageInput"
+    type="file"
+    accept="image/*"
+    onChange={handleImageChange}
+    style={{ display: "none" }}
+  />
+
+  {!coverPreview ? (
+    /* No image yet — show Upload button */
+    <button
+      type="button"
+      onClick={() => document.getElementById("coverImageInput").click()}
+      style={{
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "8px 16px", borderRadius: 8, border: "2px dashed #d1d5db",
+        background: "#f9fafb", color: "#374151", fontSize: 13,
+        cursor: "pointer", fontWeight: 500,
+      }}
+    >
+      Upload Cover Image
+    </button>
+  ) : (
+    /* Image selected — show preview and action buttons */
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+              <img
+                src={coverPreview}
+                alt="Cover preview"
+                style={{ height: 100, borderRadius: 8, objectFit: "cover", border: "1px solid #e5e7eb" }}
               />
-              {coverPreview && (
-                <img
-                  src={coverPreview}
-                  alt="Cover preview"
-                  style={{ height: 80, borderRadius: 8, objectFit: "cover", border: "1px solid #e5e7eb" }}
-                />
-              )}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("coverImageInput").click()}
+                  style={{
+                    padding: "6px 12px", borderRadius: 6, border: "1px solid #d1d5db",
+                    background: "#fff", color: "#374151", fontSize: 12,
+                    cursor: "pointer", fontWeight: 500,
+                  }}
+                >
+                  Change Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setCoverPreview(""); setCoverImage(null); }}
+                  style={{
+                    padding: "6px 12px", borderRadius: 6, border: "1px solid #fca5a5",
+                    background: "#fff", color: "#dc2626", fontSize: 12,
+                    cursor: "pointer", fontWeight: 500,
+                  }}
+                >
+                  Remove Photo
+                </button>
+              </div>
             </div>
+            )}
+          </div>
 
           </div>
 
@@ -247,7 +292,7 @@ function AdminProjectsPage() {
               <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
                 {fund.coverImage && (
                   <img
-                    src={`${IMG_BASE}${fund.coverImage}`}
+                    src={getImageUrl(fund.coverImage)}
                     alt={fund.name}
                     style={{ width: 72, height: 56, objectFit: "cover", borderRadius: 10, flexShrink: 0 }}
                   />

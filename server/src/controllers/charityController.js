@@ -88,7 +88,7 @@ const createCharity = async (req, res) => {
     }
 
     // Attach the uploaded cover image filename if one was provided
-    if (req.file) data.coverImage = req.file.filename;
+    if (req.file) data.coverImage = req.file.path;
 
     const charity = new Charity(data);
     await charity.save();
@@ -106,7 +106,7 @@ const updateCharity = async (req, res) => {
     if (typeof updates.goals === "string") {
       try { updates.goals = JSON.parse(updates.goals); } catch {}
     }
-    if (req.file) updates.coverImage = req.file.filename;
+    if (req.file) updates.coverImage = req.file.path;
 
     const charity = await Charity.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
     if (!charity) return res.status(404).json({ message: "Fund not found" });
@@ -133,8 +133,8 @@ const addProjectUpdate = async (req, res) => {
     const charity = await Charity.findById(req.params.id);
     if (!charity) return res.status(404).json({ message: "Fund not found" });
 
-    // Collect filenames of any uploaded images 
-    const imagePaths = req.files ? req.files.map(f => f.filename) : [];
+    // Collect paths of any uploaded images 
+    const imagePaths = req.files ? req.files.map(f => f.path) : [];
 
     charity.transparencyUpdates.push({
       title: req.body.title,
