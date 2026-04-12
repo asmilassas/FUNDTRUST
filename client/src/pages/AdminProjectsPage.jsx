@@ -197,6 +197,7 @@ function AdminProjectsPage() {
                 type="date"
                 value={form.deadline}
                 onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
+                min={new Date(Date.now() + 86400000).toISOString().split("T")[0]} 
                 style={inp}
               />
             </div>
