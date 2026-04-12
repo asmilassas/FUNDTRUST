@@ -3,8 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import AdminLayout from "../components/AdminLayout";
 import { fundingProgress } from "../utils";
-
-const IMG_BASE = "http://localhost:5000/uploads/";
+import { getImageUrl } from "../utils";
 
 const STATUS_CLS = {
   completed: "bg-green-100 text-green-800",
@@ -158,7 +157,7 @@ function AdminProjectUpdatePage() {
                     {u.images?.length > 0 && (
                       <div className="flex gap-1.5 flex-wrap mb-2">
                         {u.images.map((img, i) => (
-                          <img key={i} src={`${IMG_BASE}${img}`} alt={`Update image ${i + 1}`}
+                          <img key={i} src={getImageUrl(img)} alt={`Update image ${i + 1}`}
                             className="w-16 h-12 object-cover rounded-lg" />
                         ))}
                       </div>

@@ -102,3 +102,12 @@ export function avgRating(feedbackList) {
   const sum = feedbackList.reduce((acc, f) => acc + (f.rating || 0), 0);
   return (sum / feedbackList.length).toFixed(1);
 }
+
+export function getImageUrl(coverImage) {
+  if (!coverImage) return null;
+  // If it's already a full URL (Cloudinary), use it directly
+  if (coverImage.startsWith("http")) return coverImage;
+  // Legacy local filename - construct from API base
+  const base = import.meta.env.VITE_API_URL.replace("/api", "");
+  return `${base}/uploads/${coverImage}`;
+}

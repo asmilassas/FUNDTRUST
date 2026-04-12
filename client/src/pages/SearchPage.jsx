@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 import { fundingProgress } from "../utils";
-
-const IMG_BASE = "http://localhost:5000/uploads/";
+import { getImageUrl } from "../utils";
 
 // Chip button used to filter categories
 function FilterChip({ active, onClick, children }) {
@@ -119,7 +118,7 @@ function SearchPage() {
                   <div key={p._id} onClick={() => navigate(`/project/${p._id}`)}
                     className="bg-white rounded-2xl border border-orange-100/40 overflow-hidden cursor-pointer shadow-card hover:-translate-y-1 hover:shadow-panel transition-all">
                     {p.coverImage ? (
-                      <img src={`${IMG_BASE}${p.coverImage}`} alt={p.name} className="w-full h-40 object-cover" />
+                      <img src={getImageUrl(p.coverImage)} alt={p.name} className="w-full h-40 object-cover" />
                     ) : (
                       <div className="w-full h-28 bg-gradient-to-br from-brand-warm to-orange-100 flex items-center justify-center text-4xl">❤️</div>
                     )}
