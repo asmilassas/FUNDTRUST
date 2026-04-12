@@ -254,6 +254,9 @@ quick-test.yml
 `CLOUDINARY_API_KEY` - Cloudinary API key 
 `CLOUDINARY_API_SECRET` - Cloudinary API secret
 
+# Live URL
+https://fundtrust-backend.onrender.com
+
 # Frontend - Vercel
 # Setup
 - Push your code to GitHub
@@ -269,3 +272,6 @@ quick-test.yml
 # env
 `VITE_API_URL` - URL of the deployed backend API
 `VITE_STRIPE_PUBLISHABLE_KEY` - Stripe Publishable Key
+
+# Live URL
+https://fundtrust-frontend.vercel.app/
