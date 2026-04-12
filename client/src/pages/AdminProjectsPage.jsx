@@ -204,21 +204,66 @@ function AdminProjectsPage() {
 
             {/* Cover Image */}
             <div>
-              <label style={lbl}>Cover Image <span style={opt}>(optional)</span></label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                style={{ display: "block", fontSize: 13, color: "#374151", marginBottom: 10 }}
+  <label style={lbl}>Cover Image <span style={opt}>(optional)</span></label>
+
+  {/* Hidden file input */}
+  <input
+    id="coverImageInput"
+    type="file"
+    accept="image/*"
+    onChange={handleImageChange}
+    style={{ display: "none" }}
+  />
+
+  {!coverPreview ? (
+    /* No image yet — show Upload button */
+    <button
+      type="button"
+      onClick={() => document.getElementById("coverImageInput").click()}
+      style={{
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "8px 16px", borderRadius: 8, border: "2px dashed #d1d5db",
+        background: "#f9fafb", color: "#374151", fontSize: 13,
+        cursor: "pointer", fontWeight: 500,
+      }}
+    >
+      Upload Cover Image
+    </button>
+  ) : (
+    /* Image selected — show preview and action buttons */
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+              <img
+                src={coverPreview}
+                alt="Cover preview"
+                style={{ height: 100, borderRadius: 8, objectFit: "cover", border: "1px solid #e5e7eb" }}
               />
-              {coverPreview && (
-                <img
-                  src={coverPreview}
-                  alt="Cover preview"
-                  style={{ height: 80, borderRadius: 8, objectFit: "cover", border: "1px solid #e5e7eb" }}
-                />
-              )}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("coverImageInput").click()}
+                  style={{
+                    padding: "6px 12px", borderRadius: 6, border: "1px solid #d1d5db",
+                    background: "#fff", color: "#374151", fontSize: 12,
+                    cursor: "pointer", fontWeight: 500,
+                  }}
+                >
+                  Change Photo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setCoverPreview(""); setCoverImage(null); }}
+                  style={{
+                    padding: "6px 12px", borderRadius: 6, border: "1px solid #fca5a5",
+                    background: "#fff", color: "#dc2626", fontSize: 12,
+                    cursor: "pointer", fontWeight: 500,
+                  }}
+                >
+                  Remove Photo
+                </button>
+              </div>
             </div>
+            )}
+          </div>
 
           </div>
 
