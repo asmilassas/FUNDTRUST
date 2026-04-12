@@ -9,3 +9,4 @@ client/node_modules
 dist
 client/dist
 server/dist
+artillery/.env.test

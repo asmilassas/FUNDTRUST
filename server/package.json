@@ -7,7 +7,11 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "seed": "node seed/seed.js"
+    "seed": "node seed/seed.js",
+    "test:quick": "dotenv -e artillery/.env.test -- artillery run artillery/quick-test.yml",
+    "test:load": "dotenv -e artillery/.env.test -- artillery run artillery/load-test.yml",
+    "test:prod": "dotenv -e artillery/.env.test -- artillery run artillery/production-test.yml",
+    "test:report": "dotenv -e artillery/.env.test -- artillery run --output artillery/report.json artillery/load-test.yml && artillery report artillery/report.json"
   },
   "keywords": [
     "donations",
@@ -30,9 +34,12 @@
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^8.0.1",
+    "resend": "^6.10.0",
     "stripe": "^14.25.0"
   },
   "devDependencies": {
+    "artillery": "^2.0.30",
+    "dotenv-cli": "^11.0.0",
     "nodemon": "^3.1.11"
   }
 }

@@ -29,6 +29,7 @@ const register = async (req, res) => {
 
     // Send the OTP to the user's email address
     try {
+      console.log("Sending OTP to:", email, "| OTP:", otp);
       await sendEmail(
       email,
       "Verify Your FundTrust Account",

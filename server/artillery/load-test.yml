@@ -1,0 +1,69 @@
+config:
+  target: "https://fundtrust-backend.onrender.com/api"
+  phases:
+    # Warm up — ramp from 1 to 10 users over 30 seconds
+    - duration: 30
+      arrivalRate: 1
+      rampTo: 10
+      name: "Warm up"
+    # Sustained load — hold 10 users/sec for 60 seconds
+    - duration: 60
+      arrivalRate: 10
+      name: "Sustained load"
+    # Spike — simulate sudden traffic surge
+    - duration: 20
+      arrivalRate: 50
+      name: "Spike test"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  # -Public browsing
+  - name: "Browse public pages"
+    weight: 50         # 50% of virtual users do this
+    flow:
+      - get:
+          url: "/api/health"
+      - think: 1       # wait 1 second between requests
+      - get:
+          url: "/api/charities"
+      - think: 2
+      - get:
+          url: "/api/categories"
+      - think: 1
+      - get:
+          url: "/api/donations/stats"
+      - think: 1
+      - get:
+          url: "/api/donations/transparency"
+
+  # Login and authentication
+  - name: "Login and view donations"
+    weight: 30         # 30% of virtual users do this
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ $processEnvironment.TEST_USER_EMAIL }}"
+            password: "{{ $processEnvironment.TEST_USER_PASSWORD }}"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - think: 2
+      - get:
+          url: "/api/donations/me"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - think: 1
+      - get:
+          url: "/api/charities"
+          headers:
+            Authorization: "Bearer {{ token }}"
+
+  # Health Check
+  - name: "Health check only"
+    weight: 20  #20% of virtual users just ping health
+    flow:
+      - get:
+          url: "/api/health"
