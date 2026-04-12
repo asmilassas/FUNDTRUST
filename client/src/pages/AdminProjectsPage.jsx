@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { validateFundForm } from "../utils";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { getImageUrl } from "../utils";
 import AdminLayout from "../components/AdminLayout";
-
-const IMG_BASE = "http://localhost:5000/uploads/";
 
 function AdminProjectsPage() {
   const [funds, setFunds] = useState([]);
@@ -56,8 +55,8 @@ function AdminProjectsPage() {
       deadline: g.deadline ? g.deadline.slice(0, 10) : "",
     });
     setCoverImage(null);
-    setCoverPreview(fund.coverImage ? `${IMG_BASE}${fund.coverImage}` : "");
-    setEditingId(fund._id);
+    
+    setEditingId(fund._id);setCoverPreview(fund.coverImage ? getImageUrl(fund.coverImage) : "");
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -247,7 +246,7 @@ function AdminProjectsPage() {
               <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
                 {fund.coverImage && (
                   <img
-                    src={`${IMG_BASE}${fund.coverImage}`}
+                    src={getImageUrl(fund.coverImage)}
                     alt={fund.name}
                     style={{ width: 72, height: 56, objectFit: "cover", borderRadius: 10, flexShrink: 0 }}
                   />

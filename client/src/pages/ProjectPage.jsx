@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import api from "../services/api";
+import { getImageUrl } from "../utils";
 import { validateDonationAmount, fundingProgress, avgRating } from "../utils";
 import { AuthContext } from "../context/AuthContext";
 
@@ -20,8 +21,6 @@ const CARD_ELEMENT_OPTIONS = {
     invalid: { color: "#dc2626" },
   },
 };
-
-const IMG_BASE = "http://localhost:5000/uploads/";
 
 // Payment Modal 
 function PaymentModal({ project, onClose, onSuccess }) {

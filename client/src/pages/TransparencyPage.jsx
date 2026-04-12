@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { fundingProgress } from "../utils";
-
-const IMG_BASE = "http://localhost:5000/uploads/";
+import { getImageUrl } from "../utils";
 
 const STATUS_CLS = {
   completed: "bg-green-100 text-green-800",
@@ -129,7 +128,7 @@ function TransparencyPage() {
                               {u.images?.length > 0 && (
                                 <div className="flex gap-2 mt-2.5 flex-wrap">
                                   {u.images.map((img, i) => (
-                                    <img key={i} src={`${IMG_BASE}${img}`} alt="update"
+                                    <img key={i} src={getImageUrl(img)} alt="update"
                                       className="w-20 h-14 object-cover rounded-lg" />
                                   ))}
                                 </div>
