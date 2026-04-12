@@ -19,9 +19,17 @@ function Login() {
       const res = await api.post("/auth/login", form);
       await login(res.data.token);
       navigate(res.data.user.isAdmin ? "/admin/dashboard" : "/");
-    } catch (err) {
-      setError(err?.response?.data?.message || "Invalid email or password.");
-    } finally { setLoading(false); }
+   } catch (err) {
+  const message = err?.response?.data?.message || "Invalid email or password.";
+
+  if (message.toLowerCase().includes("verify your email")) {
+    localStorage.setItem("verifyEmail", form.email);
+    navigate("/verify-otp");
+    return;
+  }
+
+  setError(message);
+} finally { setLoading(false); }
   };
 
   return (
