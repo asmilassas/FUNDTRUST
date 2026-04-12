@@ -19,6 +19,7 @@ function AdminProjectUpdatePage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("started");
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [images, setImages] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -36,6 +37,23 @@ function AdminProjectUpdatePage() {
     }
   };
 
+  const handleImagesChange = (e) => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  setImages(e.target.files);
+  setImagePreviews(files.map(f => URL.createObjectURL(f)));
+};
+
+const removeImage = (index) => {
+  const updated = imagePreviews.filter((_, i) => i !== index);
+  setImagePreviews(updated);
+  // Rebuild FileList-like array
+  const updatedFiles = Array.from(images).filter((_, i) => i !== index);
+  const dt = new DataTransfer();
+  updatedFiles.forEach(f => dt.items.add(f));
+  setImages(dt.files);
+};
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title || !description) { setMessage("error:Title and description are required."); return; }
@@ -49,7 +67,7 @@ function AdminProjectUpdatePage() {
       for (let i = 0; i < images.length; i++) fd.append("images", images[i]);
       await api.post(`/charities/${id}/update`, fd, { headers: { "Content-Type": "multipart/form-data" } });
       setMessage("success");
-      setTitle(""); setDescription(""); setImages([]);
+      setTitle(""); setDescription(""); setImages([]); setImagePreviews([]);
       fetchFund();
     } catch (err) {
       setMessage("error:" + (err.response?.data?.message || "Failed to post update."));
@@ -121,8 +139,59 @@ function AdminProjectUpdatePage() {
               </select>
 
               <label className="form-label">Images (optional)</label>
-              <input type="file" multiple accept="image/*" onChange={e => setImages(e.target.files)}
-                className="block mb-4 text-sm text-gray-700" />
+
+<input
+  id="updateImagesInput"
+  type="file"
+  multiple
+  accept="image/*"
+  onChange={handleImagesChange}
+  style={{ display: "none" }}
+/>
+
+    {imagePreviews.length === 0 ? (
+      <button
+        type="button"
+        onClick={() => document.getElementById("updateImagesInput").click()}
+        className="flex items-center gap-2 px-4 py-2 mb-4 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 text-gray-600 text-sm font-medium cursor-pointer"
+      >
+        Add Image
+      </button>
+    ) : (
+      <div className="mb-4">
+        <div className="flex flex-wrap gap-2 mb-2">
+          {imagePreviews.map((src, i) => (
+            <div key={i} className="relative">
+              <img src={src} alt={`Preview ${i + 1}`}
+                className="w-16 h-12 object-cover rounded-lg border border-gray-200" />
+              <button
+                type="button"
+                onClick={() => removeImage(i)}
+                className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] leading-none cursor-pointer border-none"
+              >
+                ✕
+              </button>
+            </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => document.getElementById("updateImagesInput").click()}
+              className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-gray-600 text-xs font-medium cursor-pointer"
+            > 
+              Change Photo
+            </button>
+            <button
+              type="button"
+              onClick={() => { setImagePreviews([]); setImages([]); }}
+              className="px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-600 text-xs font-medium cursor-pointer"
+            >
+              Remove Photo
+            </button>
+          </div>
+        </div>
+        )}
 
               {message === "success" && <div className="alert-success mb-3">✅ Posted successfully!</div>}
               {message.startsWith("error:") && <div className="alert-error mb-3">❌ {message.replace("error:", "")}</div>}
