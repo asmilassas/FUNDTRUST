@@ -2,6 +2,7 @@ const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
+  service: "Gmail",
   port: 587,
   secure: false,
   auth: {
@@ -11,6 +12,11 @@ const transporter = nodemailer.createTransport({
   tls: {
     rejectUnauthorized: false,
   },
+});
+
+transporter.verify((error) => {
+  if (error) console.error("❌ Email transporter error:", error.message);
+  else console.log("✅ Email transporter ready");
 });
 
 const sendEmail = async (to, subject, text) => {
