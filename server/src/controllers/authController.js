@@ -28,12 +28,17 @@ const register = async (req, res) => {
     await user.save();
 
     // Send the OTP to the user's email address
-    await sendEmail(
+    try {
+      await sendEmail(
       email,
       "Verify Your FundTrust Account",
       `Hi ${name},\n\nYour OTP code is: ${otp}\n\nThis code expires in 10 minutes.\n\nFundTrust Team`
     );
-
+  } catch (emailErr) {
+  await User.deleteOne({ email });
+  console.error("❌ OTP email failed:", emailErr.message);
+  return res.status(500).json({ message: "Failed to send OTP. Please try again." });
+  }
     return res.status(201).json({ message: "OTP sent to email." });
   } catch (err) {
     console.error("Register error:", err);

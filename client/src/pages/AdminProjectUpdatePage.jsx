@@ -149,7 +149,7 @@ const removeImage = (index) => {
   style={{ display: "none" }}
 />
 
-    {imagePreviews.length === 0 ? (
+  {imagePreviews.length === 0 ? (
       <button
         type="button"
         onClick={() => document.getElementById("updateImagesInput").click()}
@@ -159,21 +159,6 @@ const removeImage = (index) => {
       </button>
     ) : (
       <div className="mb-4">
-        <div className="flex flex-wrap gap-2 mb-2">
-          {imagePreviews.map((src, i) => (
-            <div key={i} className="relative">
-              <img src={src} alt={`Preview ${i + 1}`}
-                className="w-16 h-12 object-cover rounded-lg border border-gray-200" />
-              <button
-                type="button"
-                onClick={() => removeImage(i)}
-                className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] leading-none cursor-pointer border-none"
-              >
-                ✕
-              </button>
-            </div>
-            ))}
-          </div>
           <div className="flex gap-2">
             <button
               type="button"
